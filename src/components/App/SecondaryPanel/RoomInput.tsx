@@ -28,6 +28,7 @@ const RoomInput = observer(({ store }: { store: RoomInputUI }) => {
         bgcolor: 'grey.900',
         padding: '0px 10px 0px 10px',
         boxShadow: '10px 10px 10px 10px black',
+        minHeight: '50px',
       }}
     >
       <StyledInputBase
