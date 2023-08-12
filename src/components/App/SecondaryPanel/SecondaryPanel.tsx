@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material';
+import { Stack, styled } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2/Grid2';
 
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -8,7 +8,7 @@ import { OnePageLayout, Theme, TwoPageLayout } from '../App';
 import { SecondaryBar } from './RoomBar';
 import RoomInput from './RoomInput';
 import RoomMessages from './RoomMessages';
-import { RoomInfo } from './RoomUsers';
+import { RoomInfo } from './RoomInfo';
 
 export const SecondaryPanel = observer(
   ({ store }: { store: SecondaryPanelUI }) => {
@@ -30,6 +30,13 @@ export const SecondaryPanel = observer(
   },
 );
 
+const GridAnimated = styled(Grid)(({ theme }) => ({
+  transition: theme.transitions.create('width', {
+    easing: theme.transitions.easing.easeInOut,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+}));
+
 const SecondaryPanelContent = observer(
   ({ store }: { store: SecondaryPanelUI }) => {
     const onePageLayout = useMediaQuery((theme) =>
@@ -42,7 +49,7 @@ const SecondaryPanelContent = observer(
       >
         <SecondaryBar store={roomUI.roomBarUI} />
         <Grid container flexGrow={1}>
-          <Grid
+          <GridAnimated
             display={
               roomUI.roomUsersUI.opened && onePageLayout ? 'none' : 'flex'
             }
@@ -52,13 +59,13 @@ const SecondaryPanelContent = observer(
           >
             <RoomMessages store={roomUI.roomMessagesUI} />
             <RoomInput store={roomUI.roomInputUI} />
-          </Grid>
-          <Grid
+          </GridAnimated>
+          <GridAnimated
             xs={roomUI.roomUsersUI.opened ? 12 : 0}
             md={roomUI.roomUsersUI.opened ? 3 : 0}
           >
             <RoomInfo store={roomUI.roomUsersUI} />
-          </Grid>
+          </GridAnimated>
         </Grid>
       </Stack>
     ));

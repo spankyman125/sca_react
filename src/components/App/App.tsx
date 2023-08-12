@@ -3,7 +3,7 @@ import Grid from '@mui/material/Unstable_Grid2/Grid2';
 import React, { memo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AppStore from '../../stores/ui/App/AppStore';
-import { SecondaryPanel } from './RoomPanel/RoomPanel';
+import { SecondaryPanel } from './SecondaryPanel/SecondaryPanel';
 import { MainPanel } from './MainPanel/MainPanel';
 
 export type Theme = {
