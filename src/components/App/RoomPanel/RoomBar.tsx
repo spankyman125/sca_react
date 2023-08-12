@@ -10,7 +10,7 @@ import RoomBarUI from '../../../stores/ui/App/RoomPanel/RoomBarUI';
 import { Theme } from '../App';
 import { RoomAddDialog } from './RoomAddDialog';
 
-export const RoomBar = observer(({ store }: { store: RoomBarUI }) => {
+export const SecondaryBar = observer(({ store }: { store: RoomBarUI }) => {
   const onePageLayout = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down('sm'),
   );

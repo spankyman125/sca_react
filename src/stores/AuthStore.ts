@@ -83,8 +83,6 @@ class AuthStore {
         this.status = AuthStatus.Authorized;
       });
       if (remember) Cookies.set('refresh_token', refresh_token);
-
-      // SocketService.init(access_token);
     } catch (e) {
       runInAction(() => {
         this.status = AuthStatus.Unauthorized;

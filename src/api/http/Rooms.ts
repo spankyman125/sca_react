@@ -9,10 +9,14 @@ export default class RoomsAPI extends HttpBase {
     return api<Room[]>(this.path, { method: 'GET' });
   }
 
-  static async create(name: string) {
+  static async create(name: string, image?: File) {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('file', image ? image : '');
     return api<Room>(this.path, {
       method: 'POST',
-      body: JSON.stringify({ name }),
+      headers: { 'Content-Type': '' },
+      body: formData,
     });
   }
 

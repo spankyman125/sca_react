@@ -1,9 +1,9 @@
-import { Box, Modal, Slide, Typography } from '@mui/material';
+import { Box, Modal, Slide, Typography, styled } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2/Grid2';
 import React, { memo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AppStore from '../../stores/ui/App/AppStore';
-import { RoomPanel } from './RoomPanel/RoomPanel';
+import { SecondaryPanel } from './RoomPanel/RoomPanel';
 import { MainPanel } from './MainPanel/MainPanel';
 
 export type Theme = {
@@ -39,19 +39,21 @@ export const TwoPageLayout = ({
     <>
       {children}
       {!opened && (
-        <Box
-          height={'100%'}
-          alignItems={'center'}
-          justifyContent={'center'}
-          display={'flex'}
-          bgcolor={'grey.900'}
-        >
+        <Centered>
           <Typography>No room selected</Typography>
-        </Box>
+        </Centered>
       )}
     </>
   );
 };
+
+const Centered = styled('div')(({ theme }) => ({
+  height: '100%',
+  alignItems: 'center',
+  justifyContent: 'center',
+  display: 'flex',
+  backgroundColor: theme.palette.grey[900],
+}));
 
 const App = memo(function App() {
   const [appUI] = useState(() => new AppStore());
@@ -64,7 +66,7 @@ const App = memo(function App() {
         <MainPanel store={appUI.mainPanelUI} />
       </Grid>
       <Grid md={9} sm={8} xs={0} height={'100vh'} bgcolor={'grey.700'}>
-        <RoomPanel store={appUI.roomPanelUI} />
+        <SecondaryPanel store={appUI.secondaryPanelUI} />
       </Grid>
     </Grid>
   );

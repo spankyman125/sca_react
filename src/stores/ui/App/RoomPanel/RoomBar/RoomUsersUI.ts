@@ -2,16 +2,12 @@ import { makeAutoObservable } from 'mobx';
 import { User } from '../../../../../api/http/interfaces';
 import RoomUI from '../RoomUI';
 
-export default class RoomUsersUI {
+export default class RoomInfoUI {
   roomUI: RoomUI;
   opened = false;
 
   get users(): User[] {
     return this.roomUI.room?.users ? this.roomUI.room.users : [];
-  }
-
-  get roomId() {
-    return this.roomUI.roomId;
   }
 
   constructor(roomUI: RoomUI) {

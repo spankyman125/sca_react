@@ -3,6 +3,7 @@ import UsersAPI from '../../../../api/http/Users';
 import { User } from '../../../../api/http/interfaces';
 import { authStore } from '../../../AuthStore';
 import RoomUI from './RoomUI';
+import RoomsAPI from '../../../../api/http/Rooms';
 
 export interface ProposedUser extends User {
   inRoom: boolean;
@@ -10,6 +11,7 @@ export interface ProposedUser extends User {
 
 export default class RoomAddDialogUI {
   roomUI: RoomUI;
+
   open = false;
   fetchedUsers: User[] = [];
   abortController: AbortController;
@@ -66,9 +68,10 @@ export default class RoomAddDialogUI {
     this.abortController = new AbortController();
   }
 
-  async addToRoom(userId: number) {
-    //Add request pending handle
-    await this.roomUI.addUser(userId);
+  async addToRoom(user: User) {
+    // TODO: Add request pending handle
+    await RoomsAPI.addUser(this.roomId, user.id);
+    this.roomUI.addUser(user);
   }
 
   async search(username: string, pseudonym: string) {

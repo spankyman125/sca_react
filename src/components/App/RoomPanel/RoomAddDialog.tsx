@@ -24,6 +24,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { TransitionProps } from '@mui/material/transitions';
 import { observer } from 'mobx-react-lite';
 import * as React from 'react';
+import { User } from '../../../api/http/interfaces';
+import { STATIC_URL } from '../../../consts';
 import RoomAddDialogUI, {
   ProposedUser,
 } from '../../../stores/ui/App/RoomPanel/RoomAddDialogUI';
@@ -46,7 +48,6 @@ export const RoomAddDialog = observer(
         fullWidth
         fullScreen={onePageLayout}
         open={store.open}
-        // PaperProps={{ sx: { height: '100%' } }}
         TransitionComponent={Transition}
         onClose={() => store.setOpen(false)}
       >
@@ -68,7 +69,7 @@ const DialogHeader = observer(({ store }: { store: RoomAddDialogUI }) => {
   return (
     <DialogTitle sx={{ display: 'flex' }}>
       <Stack flexGrow={1}>
-        <Box display={'flex'}>
+        <Box display={'flex'} paddingBottom={1}>
           <Box flexGrow={1}>Add users</Box>
           <IconButton>
             <AddLinkIcon />
@@ -82,7 +83,7 @@ const DialogHeader = observer(({ store }: { store: RoomAddDialogUI }) => {
 
 const DialogCenter = observer(({ store }: { store: RoomAddDialogUI }) => {
   const handleClick = React.useCallback(
-    (userId: number) => void store.addToRoom(userId),
+    (user: User) => void store.addToRoom(user),
     [store],
   );
   return (
@@ -109,7 +110,7 @@ const ProposedUsers = React.memo(
     handleClick,
   }: {
     users: ProposedUser[];
-    handleClick: (userId: number) => void;
+    handleClick: (user: User) => void;
   }) => {
     return (
       <List
@@ -117,15 +118,13 @@ const ProposedUsers = React.memo(
           paddingBottom: 0,
         }}
       >
-        {users.map((user) => {
-          return (
-            <ProposedUserItem
-              key={user.id}
-              user={user}
-              handleClick={() => handleClick(user.id)}
-            />
-          );
-        })}
+        {users.map((user) => (
+          <ProposedUserItem
+            key={user.id}
+            user={user}
+            handleClick={() => handleClick(user)}
+          />
+        ))}
       </List>
     );
   },
@@ -150,7 +149,7 @@ const ProposedUserItem = React.memo(
       >
         <ListItemButton alignItems="flex-start">
           <ListItemAvatar>
-            <Avatar alt={user.pseudonym} src={'/' + user.avatarUrl} />
+            <Avatar alt={user.pseudonym} src={STATIC_URL + user.avatarUrl} />
           </ListItemAvatar>
           <ListItemText
             primary={`${user.pseudonym} (${user.username})`}

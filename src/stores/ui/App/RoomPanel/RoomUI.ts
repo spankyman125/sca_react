@@ -1,70 +1,66 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import RoomsAPI from '../../../../api/http/Rooms';
-import { Room, User } from '../../../../api/http/interfaces';
-import RoomUsersUI from './RoomBar/RoomUsersUI';
+import { Message, User } from '../../../../api/http/interfaces';
+import RoomAddDialogUI from './RoomAddDialogUI';
+import RoomInfoUI from './RoomBar/RoomUsersUI';
 import RoomBarUI from './RoomBarUI';
 import RoomInputUI from './RoomInputUI';
 import RoomMessagesUI from './RoomMessagesUI';
-import RoomPanelUI from './RoomPanelUI';
-import RoomAddDialogUI from './RoomAddDialogUI';
-import SocketService from '../../../../api/socket/SocketService';
+import SecondaryPanelUI from './RoomPanelUI';
 
 export default class RoomUI {
-  roomPanelUI: RoomPanelUI;
+  secondaryPanelUI: SecondaryPanelUI;
 
   roomBarUI: RoomBarUI;
   roomMessagesUI: RoomMessagesUI;
-  roomUsersUI: RoomUsersUI;
+  roomUsersUI: RoomInfoUI;
   roomInputUI: RoomInputUI;
   roomAddDialogUI: RoomAddDialogUI;
   roomId: number;
-  room: Room | undefined;
 
-  get socketService(): SocketService {
-    return this.roomPanelUI.appUI.socketService;
+  get appUI() {
+    return this.secondaryPanelUI.appUI;
   }
 
-  constructor(roomPanelUI: RoomPanelUI, roomId: number) {
+  get room() {
+    return this.appUI.getRoom(this.roomId)!;
+  }
+
+  constructor(secondaryPanelUI: SecondaryPanelUI, roomId: number) {
     makeAutoObservable(this);
     this.roomId = roomId;
-    this.roomPanelUI = roomPanelUI;
+    this.secondaryPanelUI = secondaryPanelUI;
     this.roomMessagesUI = new RoomMessagesUI(this);
     this.roomInputUI = new RoomInputUI(this);
     this.roomBarUI = new RoomBarUI(this);
-    this.roomUsersUI = new RoomUsersUI(this);
+    this.roomUsersUI = new RoomInfoUI(this);
     this.roomAddDialogUI = new RoomAddDialogUI(this);
-    this.socketService.io.on('rooms:joined', (user: User) => {
-      this.room?.users?.push(user);
-    });
-    void this.fetch();
+    void this.fetchUsers();
   }
 
-  async fetch() {
-    const room = await RoomsAPI.findOne(this.roomId);
+  async fetchUsers() {
     const users = await RoomsAPI.getUsers(this.roomId);
     runInAction(() => {
-      this.room = { ...room, users: users };
+      this.room.users = users;
     });
   }
 
   async removeUser(userId: number) {
-    if (this.room) {
-      await RoomsAPI.removeUser(this.roomId, userId);
-      // this.room.users?.pop();
-      runInAction(() => {
-        this.room!.users = this.room?.users?.filter(
-          (user) => user.id !== userId,
-        );
-      });
-    }
+    await RoomsAPI.removeUser(this.roomId, userId);
+    runInAction(() => {
+      this.room.users = this.room?.users?.filter((user) => user.id !== userId);
+    });
   }
 
-  async addUser(userId: number) {
-    if (this.room) {
-      const addedUser = await RoomsAPI.addUser(this.roomId, userId);
-      runInAction(() => {
-        this.room!.users?.push(addedUser);
-      });
-    }
+  addUser(user: User) {
+    this.room.users?.push(user);
+  }
+
+  addNewMessages(...messages: Message[]) {
+    this.room.messages?.unshift(...messages);
+  }
+
+  addOldMessages(...messages: Message[]) {
+    this.room.messages?.push(...messages);
   }
 }

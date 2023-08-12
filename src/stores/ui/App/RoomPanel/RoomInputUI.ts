@@ -3,6 +3,7 @@ import { Message } from '../../../../api/http/interfaces';
 import { makeAutoObservable } from 'mobx';
 import { authStore } from '../../../AuthStore';
 import RoomUI from './RoomUI';
+import { error } from 'console';
 
 export default class RoomInputUI {
   roomUI: RoomUI;
@@ -21,17 +22,13 @@ export default class RoomInputUI {
     this.messageContent = message;
   }
 
-  addEnter() {
-    this.messageContent += '\n';
-  }
-
   sendMessage() {
     let newMessage: Message = {
       id: new Date().getTime(),
       content: this.messageContent,
       createdAt: new Date().toString(),
       roomId: this.roomId,
-      userId: authStore.user!.id,
+      userId: authStore.user?.id || -1,
       user: authStore.user,
     };
     void MessagesAPI.create(this.roomId, this.messageContent).then(

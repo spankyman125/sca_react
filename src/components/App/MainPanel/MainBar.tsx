@@ -64,7 +64,6 @@ export const SearchField = ({
         fullWidth
         onChange={handleChange}
         placeholder="Search…"
-        inputProps={{ 'aria-label': 'search' }}
       />
     </SearchWrapper>
   );

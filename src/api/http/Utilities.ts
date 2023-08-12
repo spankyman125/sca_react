@@ -17,9 +17,9 @@ export async function api<T>(
     Authorization: `Bearer ${authStore.access_token}`,
     Accept: 'application/json',
     'Content-Type': 'application/json',
+    ...init?.headers,
   });
-  const reqHeaders = new Headers(init?.headers);
-  reqHeaders.forEach((value, header) => headers.set(header, value));
+  headers.forEach((value, header) => value === '' && headers.delete(header));
   const newInit: RequestInit = { ...init, headers };
   newInit.signal = signal;
   return fetch(url, newInit).then((response) => {

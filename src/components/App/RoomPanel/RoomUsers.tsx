@@ -1,4 +1,4 @@
-import { useTheme } from '@emotion/react';
+import { useTheme } from '@mui/material';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import {
   Avatar,
@@ -12,9 +12,10 @@ import { observer } from 'mobx-react-lite';
 import { memo, useCallback } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { User } from '../../../api/http/interfaces';
-import RoomUsersUI from '../../../stores/ui/App/RoomPanel/RoomBar/RoomUsersUI';
+import RoomInfoUI from '../../../stores/ui/App/RoomPanel/RoomBar/RoomUsersUI';
+import { STATIC_URL } from '../../../consts';
 
-export const RoomUsers = observer(({ store }: { store: RoomUsersUI }) => {
+export const RoomInfo = observer(({ store }: { store: RoomInfoUI }) => {
   const handleClick = useCallback(
     (userId: number) => void store.removeUser(userId),
     [store],
@@ -22,13 +23,12 @@ export const RoomUsers = observer(({ store }: { store: RoomUsersUI }) => {
   const itemContent = (_index: number, user: User) => {
     return <UserRow user={user} handleClick={handleClick} />;
   };
-  const theme: any = useTheme();
+  const theme = useTheme();
 
   return (
     <Virtuoso
       style={{
         flexGrow: 1,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         backgroundColor: theme.palette.grey[900],
       }}
       computeItemKey={(_index, item) => item.id}
@@ -64,7 +64,7 @@ const UserRow = memo(
       >
         <ListItemButton alignItems="flex-start">
           <ListItemAvatar>
-            <Avatar alt={user.pseudonym} src={'/' + user.avatarUrl} />
+            <Avatar alt={user.pseudonym} src={STATIC_URL + user.avatarUrl} />
           </ListItemAvatar>
           <ListItemText
             primary={user.pseudonym}

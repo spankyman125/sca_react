@@ -11,18 +11,16 @@ import { router } from 'main';
 import { observer } from 'mobx-react-lite';
 import { Room } from '../../../api/http/interfaces';
 import MainRoomsUI from '../../../stores/ui/App/MainPanel/MainRoomsUI';
+import { STATIC_URL } from '../../../consts';
 
 const MainRooms = observer(({ store }: { store: MainRoomsUI }) => {
   return (
     <List
       sx={{
-        height: '100%',
         overflow: 'auto',
-        padding: 0,
-        bgcolor: 'background.default',
       }}
     >
-      {store.rooms.map((room) => (
+      {[...store.rooms].map(([, room]) => (
         <RoomListItem
           key={room.id}
           room={room}
@@ -43,7 +41,7 @@ const RoomListItem = observer(
           onClick={() => void router.navigate(`/app/rooms/${room.id}`)}
         >
           <ListItemAvatar>
-            <Avatar alt={room.name} src={'/' + room.avatarUrl} />
+            <Avatar alt={room.name} src={STATIC_URL + room.avatarUrl} />
           </ListItemAvatar>
           <ListItemText
             primary={room.name}
