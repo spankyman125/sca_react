@@ -7,6 +7,7 @@ import RoomBarUI from './RoomBarUI';
 import RoomInputUI from './RoomInputUI';
 import RoomMessagesUI from './RoomMessagesUI';
 import SecondaryPanelUI from './RoomPanelUI';
+import RoomCallUI from './RoomCallUI';
 
 export default class RoomUI {
   secondaryPanelUI: SecondaryPanelUI;
@@ -15,6 +16,7 @@ export default class RoomUI {
   roomMessagesUI: RoomMessagesUI;
   roomUsersUI: RoomInfoUI;
   roomInputUI: RoomInputUI;
+  roomCallUI: RoomCallUI;
   roomAddDialogUI: RoomAddDialogUI;
   roomId: number;
 
@@ -34,6 +36,7 @@ export default class RoomUI {
     this.roomInputUI = new RoomInputUI(this);
     this.roomBarUI = new RoomBarUI(this);
     this.roomUsersUI = new RoomInfoUI(this);
+    this.roomCallUI = new RoomCallUI(this);
     this.roomAddDialogUI = new RoomAddDialogUI(this);
     void this.fetchUsers();
   }

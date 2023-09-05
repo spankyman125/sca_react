@@ -5,9 +5,11 @@ import SocketService from '../../../api/socket/SocketService';
 import { authStore } from '../../AuthStore';
 import MainPanelUI from './MainPanel/MainPanelUI';
 import SecondaryPanelUI from './RoomPanel/RoomPanelUI';
+import MediasoupStore from '../../MediasoupStore';
 
 export default class AppStore {
   socketService: SocketService;
+  mediasoupStore: MediasoupStore;
   activeRoomId: number | undefined = undefined;
   roomIdToSet: number | undefined = undefined;
   mainPanelUI: MainPanelUI;
@@ -17,6 +19,7 @@ export default class AppStore {
   constructor() {
     makeAutoObservable(this);
     this.socketService = new SocketService(authStore.access_token);
+    this.mediasoupStore = new MediasoupStore(this);
     this.mainPanelUI = new MainPanelUI(this);
     this.secondaryPanelUI = new SecondaryPanelUI(this);
     void this.fetch();

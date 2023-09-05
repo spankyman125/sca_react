@@ -9,6 +9,7 @@ import { SecondaryBar } from './RoomBar';
 import RoomInput from './RoomInput';
 import RoomMessages from './RoomMessages';
 import { RoomInfo } from './RoomInfo';
+import RoomCall from './RoomCall';
 
 export const SecondaryPanel = observer(
   ({ store }: { store: SecondaryPanelUI }) => {
@@ -57,6 +58,7 @@ const SecondaryPanelContent = observer(
             md={roomUI.roomUsersUI.opened ? 9 : 12}
             flexDirection={'column'}
           >
+            <RoomCall store={roomUI.roomCallUI} />
             <RoomMessages store={roomUI.roomMessagesUI} />
             <RoomInput store={roomUI.roomInputUI} />
           </GridAnimated>

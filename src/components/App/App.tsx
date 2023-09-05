@@ -1,10 +1,11 @@
 import { Box, Modal, Slide, Typography, styled } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2/Grid2';
-import React, { memo, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AppStore from '../../stores/ui/App/AppStore';
-import { SecondaryPanel } from './SecondaryPanel/SecondaryPanel';
 import { MainPanel } from './MainPanel/MainPanel';
+import { SecondaryPanel } from './SecondaryPanel/SecondaryPanel';
 
 export type Theme = {
   breakpoints: {
@@ -55,18 +56,18 @@ const Centered = styled('div')(({ theme }) => ({
   backgroundColor: theme.palette.grey[900],
 }));
 
-const App = memo(function App() {
-  const [appUI] = useState(() => new AppStore());
+const App = observer(() => {
+  const [appStore] = useState(() => new AppStore());
   const params = useParams();
-  appUI.setActive(params.roomId ? +params.roomId : undefined);
+  appStore.setActive(params.roomId ? +params.roomId : undefined);
 
   return (
     <Grid container>
       <Grid md={3} sm={4} xs={12} height={'100vh'}>
-        <MainPanel store={appUI.mainPanelUI} />
+        <MainPanel store={appStore.mainPanelUI} />
       </Grid>
       <Grid md={9} sm={8} xs={0} height={'100vh'} bgcolor={'grey.700'}>
-        <SecondaryPanel store={appUI.secondaryPanelUI} />
+        <SecondaryPanel store={appStore.secondaryPanelUI} />
       </Grid>
     </Grid>
   );
