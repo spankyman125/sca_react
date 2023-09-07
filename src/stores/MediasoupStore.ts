@@ -16,6 +16,11 @@ export default class MediasoupStore {
   localStream: MediaStream | undefined;
   remoteStream: MediaStream | undefined;
   producer: Producer | undefined;
+  routerRtpCapabilities: RtpCapabilities | undefined = undefined;
+
+  get roomId() {
+    return this.appStore.activeRoomId;
+  }
 
   get socketService() {
     return this.appStore.socketService;
@@ -24,25 +29,6 @@ export default class MediasoupStore {
   constructor(appStore: AppStore) {
     makeAutoObservable(this);
     this.appStore = appStore;
-    this.connect();
-  }
-
-  connect() {
-    const opts = {
-      path: '/server',
-      transports: ['websocket'],
-    };
-
-    this.socketService.io.on('connect', async () => {
-      console.log('Mediasoup connection ...');
-      console.log(this.socketService.io.id);
-      const rtpCapabilities = (await this.socketService.io.emitWithAck(
-        'getRouterRtpCapabilities',
-      )) as RtpCapabilities;
-      console.log('Mediasoup connected');
-      console.log('Mediasoup rtpCaps:', rtpCapabilities);
-      await this.loadDevice(rtpCapabilities);
-    });
 
     this.socketService.io.on('disconnect', () => {
       console.log('Mediasoup disconnected');
@@ -51,7 +37,7 @@ export default class MediasoupStore {
     this.socketService.io.on('connect_error', (error) => {
       console.error(
         'Mediasoup connection failed %s (%s)',
-        opts.path,
+        '/server',
         error.message,
       );
     });
@@ -61,11 +47,31 @@ export default class MediasoupStore {
     });
   }
 
-  async loadDevice(routerRtpCapabilities: RtpCapabilities) {
+  async join() {
+    console.log('Joining mediasoup room ...');
+    await this.getRtpCapabilities();
+    await this.loadDevice();
+    await this.publish('screenshare');
+    await this.subscribe();
+    console.log('Mediasoup room joined');
+  }
+
+  async getRtpCapabilities() {
+    console.log('Receiving rtp caps ...');
+    this.routerRtpCapabilities = (await this.socketService.io.emitWithAck(
+      'getRouterRtpCapabilities',
+      { roomId: this.roomId },
+    )) as RtpCapabilities;
+    console.log('RtpCaps received:');
+  }
+
+  async loadDevice() {
     try {
       console.log('Device loading ...');
       this.device = new Device();
-      await this.device.load({ routerRtpCapabilities });
+      await this.device.load({
+        routerRtpCapabilities: this.routerRtpCapabilities!,
+      });
       console.log('Device loaded');
     } catch (error) {
       console.error(error);
@@ -78,6 +84,7 @@ export default class MediasoupStore {
       const data = (await this.socketService.io.emitWithAck(
         'createProducerTransport',
         {
+          roomId: this.roomId,
           forceTcp: false,
           rtpCapabilities: this.device.rtpCapabilities,
         },
@@ -96,6 +103,7 @@ export default class MediasoupStore {
         console.log('connectProducerTransport');
         try {
           await this.socketService.io.emitWithAck('connectProducerTransport', {
+            roomId: this.roomId,
             dtlsParameters,
           });
           console.log('connectProducerTransport connected');
@@ -114,6 +122,7 @@ export default class MediasoupStore {
             console.log('produce');
             const { id } = await this.socketService.io.emitWithAck('produce', {
               transportId: transport.id,
+              roomId: this.roomId,
               kind,
               rtpParameters,
             });
@@ -150,7 +159,7 @@ export default class MediasoupStore {
         console.log('Receiving user media ...');
         const stream = await this.getUserMedia(mediatype);
         console.log('User media stream received');
-        const track = stream.getAudioTracks()[0];
+        const track = stream.getVideoTracks()[0];
         const params = { track };
         this.producer = await transport.produce(params);
       } catch (err) {
@@ -191,6 +200,7 @@ export default class MediasoupStore {
       const transportOptions = (await this.socketService.io.emitWithAck(
         'createConsumerTransport',
         {
+          roomId: this.roomId,
           forceTcp: false,
         },
       )) as TransportOptions;
@@ -208,6 +218,7 @@ export default class MediasoupStore {
         console.log('connectConsumerTransport');
         try {
           await this.socketService.io.emitWithAck('connectConsumerTransport', {
+            roomId: this.roomId,
             dtlsParameters,
           });
           console.log('connectConsumerTransport connected');
@@ -227,7 +238,7 @@ export default class MediasoupStore {
           case 'connected':
             console.log('Mediasoup state: connected');
             // console.log('Stream obj', this.stream)
-            this.socketService.io.emit('resume');
+            this.socketService.io.emit('resume', { roomId: this.roomId });
             break;
 
           case 'failed':
@@ -249,6 +260,7 @@ export default class MediasoupStore {
       console.log('consume');
       const { rtpCapabilities } = this.device;
       const data = await this.socketService.io.emitWithAck('consume', {
+        roomId: this.roomId,
         rtpCapabilities,
       });
       const { producerId, id, kind, rtpParameters } = data;

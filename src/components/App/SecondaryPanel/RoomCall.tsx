@@ -7,13 +7,16 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
     <Box height={300} bgcolor={'grey.900'}>
       Local
       {store.mediasoupStore.localStream && (
-        <Audio stream={store.mediasoupStore.localStream} />
+        <Video stream={store.mediasoupStore.localStream} />
       )}
       Remote
       {store.mediasoupStore.remoteStream && (
-        <Audio stream={store.mediasoupStore.remoteStream} />
+        <Video stream={store.mediasoupStore.remoteStream} />
       )}
-      <Button onClick={() => void store.mediasoupStore.publish('audio')}>
+      <Button onClick={() => void store.mediasoupStore.join()}>
+        Join Room
+      </Button>
+      {/* <Button onClick={() => void store.mediasoupStore.join()}>
         Connect mediasoup
       </Button>
       <Button onClick={() => void store.mediasoupStore.publish('audio')}>
@@ -21,7 +24,7 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
       </Button>
       <Button onClick={() => void store.mediasoupStore.subscribe()}>
         Subscribe
-      </Button>
+      </Button> */}
       Call
     </Box>
   );
