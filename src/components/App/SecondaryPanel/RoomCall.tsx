@@ -1,6 +1,7 @@
 import { Box, Button } from '@mui/material';
-import RoomCallUI from '../../../stores/ui/App/RoomPanel/RoomCallUI';
 import { observer } from 'mobx-react-lite';
+import { LiveAudioVisualizer } from 'react-audio-visualize';
+import RoomCallUI from '../../../stores/ui/App/RoomPanel/RoomCallUI';
 
 const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
   return (
@@ -9,9 +10,14 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
       {store.mediasoupStore.streams.local && (
         <Audio stream={store.mediasoupStore.streams.local} />
       )}
-      Remote
-      {store.mediasoupStore.streams.remote.map((stream) => {
-        return <Audio stream={stream} />;
+      Remote:
+      {store.mediasoupStore.streams.remote.map((stream, index) => {
+        return (
+          <>
+            {index}
+            <Audio stream={stream} />
+          </>
+        );
       })}
       <Button onClick={() => void store.mediasoupStore.join()}>
         Join Room
@@ -36,14 +42,25 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
 // });
 
 const Audio = observer(({ stream }: { stream: MediaStream }) => {
+  const mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.start();
   return (
-    <audio
-      controls
-      autoPlay
-      ref={(ref) => {
-        if (ref) ref.srcObject = stream;
-      }}
-    />
+    <>
+      <LiveAudioVisualizer
+        mediaRecorder={mediaRecorder}
+        width={100}
+        height={100}
+        barWidth={2}
+        gap={1}
+        barColor={'#f76565'}
+      />
+      <audio
+        autoPlay
+        ref={(ref) => {
+          if (ref) ref.srcObject = stream;
+        }}
+      ></audio>
+    </>
   );
 });
 

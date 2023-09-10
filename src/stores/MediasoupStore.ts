@@ -277,6 +277,7 @@ export default class MediasoupStore {
         kind,
         rtpParameters,
       });
+      this.consumers.push(consumer);
       this.socketService.io.emit('resume', {
         roomId: this.roomId,
         consumerId: id,
