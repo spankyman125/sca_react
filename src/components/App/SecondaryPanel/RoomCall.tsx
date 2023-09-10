@@ -6,49 +6,40 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
   return (
     <Box height={300} bgcolor={'grey.900'}>
       Local
-      {store.mediasoupStore.localStream && (
-        <Video stream={store.mediasoupStore.localStream} />
+      {store.mediasoupStore.streams.local && (
+        <Audio stream={store.mediasoupStore.streams.local} />
       )}
       Remote
-      {store.mediasoupStore.remoteStream && (
-        <Video stream={store.mediasoupStore.remoteStream} />
-      )}
+      {store.mediasoupStore.streams.remote.map((stream) => {
+        return <Audio stream={stream} />;
+      })}
       <Button onClick={() => void store.mediasoupStore.join()}>
         Join Room
       </Button>
-      {/* <Button onClick={() => void store.mediasoupStore.join()}>
-        Connect mediasoup
-      </Button>
-      <Button onClick={() => void store.mediasoupStore.publish('audio')}>
-        Publish
-      </Button>
-      <Button onClick={() => void store.mediasoupStore.subscribe()}>
-        Subscribe
-      </Button> */}
       Call
     </Box>
   );
 });
 
-const Video = observer(({ stream }: { stream: MediaStream }) => {
-  return (
-    <video
-      controls
-      autoPlay
-      height={200}
-      ref={(ref) => {
-        if (ref) ref.srcObject = stream;
-      }}
-    />
-  );
-});
+// const Video = observer(({ stream }: { stream: MediaStream }) => {
+//   return (
+//     <video
+//       controls
+//       autoPlay
+//       height={200}
+//       width={150}
+//       ref={(ref) => {
+//         if (ref) ref.srcObject = stream;
+//       }}
+//     />
+//   );
+// });
 
 const Audio = observer(({ stream }: { stream: MediaStream }) => {
   return (
     <audio
       controls
       autoPlay
-      height={200}
       ref={(ref) => {
         if (ref) ref.srcObject = stream;
       }}

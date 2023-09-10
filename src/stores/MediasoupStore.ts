@@ -3,6 +3,10 @@ import { Device } from 'mediasoup-client';
 import { RtpCapabilities } from 'mediasoup-client/lib/RtpParameters';
 import {
   AppData,
+  Consumer,
+  DtlsParameters,
+  IceCandidate,
+  IceParameters,
   Producer,
   Transport,
   TransportOptions,
@@ -10,12 +14,29 @@ import {
 import { makeAutoObservable } from 'mobx';
 import AppStore from './ui/App/AppStore';
 
+export interface TransportParams {
+  id: string;
+  iceParameters: IceParameters;
+  iceCandidates: IceCandidate[];
+  dtlsParameters: DtlsParameters;
+}
+
 export default class MediasoupStore {
   appStore: AppStore;
   device: Device | undefined = undefined;
-  localStream: MediaStream | undefined;
-  remoteStream: MediaStream | undefined;
+  streams: { local: MediaStream | undefined; remote: MediaStream[] } = {
+    local: undefined,
+    remote: [],
+  };
+
+  transport: {
+    consumer: Transport | undefined;
+    producer: Transport | undefined;
+  } = { consumer: undefined, producer: undefined };
+
+  consumers: Consumer[] = [];
   producer: Producer | undefined;
+
   routerRtpCapabilities: RtpCapabilities | undefined = undefined;
 
   get roomId() {
@@ -42,24 +63,158 @@ export default class MediasoupStore {
       );
     });
 
-    this.socketService.io.on('newProducer', () => {
-      console.log('Mediasoup producer created');
+    this.socketService.io.on('mediasoup:producer:new', (producerId: string) => {
+      console.log('mediasoup:producer:new', producerId);
+      void this.consume(producerId);
     });
   }
 
   async join() {
-    console.log('Joining mediasoup room ...');
+    console.log('mediasoup:join');
     await this.getRtpCapabilities();
     await this.loadDevice();
-    await this.publish('screenshare');
-    await this.subscribe();
+    const data = (await this.socketService.io.emitWithAck('mediasoup:join', {
+      roomId: this.roomId,
+    })) as {
+      consumerTransportOptions: TransportOptions<AppData>;
+      producerTransportOptions: TransportOptions<AppData>;
+      producerIds: string[];
+    };
+    console.log(data);
+    await this.connectProducerTransport(data.producerTransportOptions);
+    this.connectConsumerTransport(data.consumerTransportOptions);
+    for (let i = 0; i < data.producerIds.length; i++) {
+      const producerId = data.producerIds[i];
+      await this.consume(producerId);
+    }
     console.log('Mediasoup room joined');
+  }
+
+  async connectProducerTransport(options: TransportOptions<AppData>) {
+    const transport = this.device!.createSendTransport(options);
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+      console.log('mediasoup:connect:producer');
+      try {
+        await this.socketService.io.emitWithAck('mediasoup:connect:producer', {
+          roomId: this.roomId,
+          dtlsParameters,
+        });
+        console.log('mediasoup:connect:producer connected');
+        callback();
+      } catch (error) {
+        console.log(error);
+        errback(error);
+      }
+    });
+
+    transport.on(
+      'produce',
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      async ({ kind, rtpParameters }, callback, errback) => {
+        try {
+          console.log('produce');
+          const { id } = await this.socketService.io.emitWithAck('produce', {
+            roomId: this.roomId,
+            kind,
+            rtpParameters,
+          });
+          callback({ id });
+        } catch (err) {
+          console.log(error);
+          errback(err);
+        }
+      },
+    );
+
+    transport.on('connectionstatechange', (state) => {
+      switch (state) {
+        case 'connecting':
+          console.log('mediasoup:producer:connection:connecting');
+          break;
+
+        case 'connected':
+          console.log('mediasoup:producer:connection:connected');
+          break;
+
+        case 'failed':
+          console.log('mediasoup:producer:connection:failed');
+          transport.close();
+          break;
+
+        default:
+          break;
+      }
+    });
+
+    try {
+      console.log('Receiving user media ...');
+      const stream = await this.getUserMedia('audio');
+      console.log('User media stream received');
+      const track = stream.getAudioTracks()[0];
+      const params = { track };
+      this.producer = await transport.produce(params);
+    } catch (err) {
+      console.error('Mediasoup publish failed', err);
+    }
+  }
+
+  connectConsumerTransport(options: TransportOptions<AppData>) {
+    console.log('connectConsumerTransport');
+    this.transport.consumer = this.device!.createRecvTransport(options);
+    console.log('transport created');
+
+    this.transport.consumer.on(
+      'connect',
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      async ({ dtlsParameters }, callback, errback) => {
+        console.log('mediasoup:connect:consumer');
+        try {
+          await this.socketService.io.emitWithAck(
+            'mediasoup:connect:consumer',
+            {
+              roomId: this.roomId,
+              dtlsParameters,
+              transportId: options.id,
+            },
+          );
+          console.log('mediasoup:connect:consumer connected');
+          callback();
+        } catch (error) {
+          console.log(error);
+          errback(error);
+        }
+      },
+    );
+
+    this.transport.consumer.on('connectionstatechange', (state) => {
+      switch (state) {
+        case 'connecting':
+          console.log('Mediasoup state: connecting');
+          break;
+
+        case 'connected':
+          console.log('Mediasoup state: connected');
+          // console.log('Stream obj', this.stream)
+          // this.socketService.io.emit('resume', { roomId: this.roomId });
+          break;
+
+        case 'failed':
+          console.log('Mediasoup state: failed');
+          this.transport.consumer?.close();
+          break;
+
+        default:
+          break;
+      }
+    });
   }
 
   async getRtpCapabilities() {
     console.log('Receiving rtp caps ...');
     this.routerRtpCapabilities = (await this.socketService.io.emitWithAck(
-      'getRouterRtpCapabilities',
+      'mediasoup:getRTPCaps',
       { roomId: this.roomId },
     )) as RtpCapabilities;
     console.log('RtpCaps received:');
@@ -75,96 +230,6 @@ export default class MediasoupStore {
       console.log('Device loaded');
     } catch (error) {
       console.error(error);
-    }
-  }
-
-  async publish(mediatype: 'audio' | 'video' | 'screenshare') {
-    if (this.device) {
-      console.log('Creating producer transport ...');
-      const data = (await this.socketService.io.emitWithAck(
-        'createProducerTransport',
-        {
-          roomId: this.roomId,
-          forceTcp: false,
-          rtpCapabilities: this.device.rtpCapabilities,
-        },
-      )) as TransportOptions<AppData>;
-      if (data.error) {
-        console.error(data.error);
-        return;
-      }
-      console.log('Producer transport created');
-      console.log('Creating send transport');
-
-      const transport = this.device.createSendTransport(data);
-
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-        console.log('connectProducerTransport');
-        try {
-          await this.socketService.io.emitWithAck('connectProducerTransport', {
-            roomId: this.roomId,
-            dtlsParameters,
-          });
-          console.log('connectProducerTransport connected');
-          callback();
-        } catch (error) {
-          console.log(error);
-          errback(error);
-        }
-      });
-
-      transport.on(
-        'produce',
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        async ({ kind, rtpParameters }, callback, errback) => {
-          try {
-            console.log('produce');
-            const { id } = await this.socketService.io.emitWithAck('produce', {
-              transportId: transport.id,
-              roomId: this.roomId,
-              kind,
-              rtpParameters,
-            });
-            callback({ id });
-          } catch (err) {
-            console.log(error);
-            errback(err);
-          }
-        },
-      );
-
-      transport.on('connectionstatechange', (state) => {
-        console.log('Connection state changed');
-        switch (state) {
-          case 'connecting':
-            console.log('Mediasoup connection state: publishing');
-            break;
-
-          case 'connected':
-            console.log('Mediasoup connection state: connected');
-            break;
-
-          case 'failed':
-            transport.close();
-            console.error('Mediasoup connection state: failed');
-            break;
-
-          default:
-            break;
-        }
-      });
-
-      try {
-        console.log('Receiving user media ...');
-        const stream = await this.getUserMedia(mediatype);
-        console.log('User media stream received');
-        const track = stream.getVideoTracks()[0];
-        const params = { track };
-        this.producer = await transport.produce(params);
-      } catch (err) {
-        console.error('Mediasoup publish failed', err);
-      }
     }
   }
 
@@ -186,7 +251,7 @@ export default class MediasoupStore {
           });
           break;
       }
-      this.localStream = stream;
+      this.streams.local = stream;
       return stream;
     } catch (err) {
       console.error('getUserMedia() failed:', err);
@@ -194,88 +259,32 @@ export default class MediasoupStore {
     }
   }
 
-  async subscribe() {
+  async consume(producerId: string) {
     if (this.device) {
-      console.log('Consumer transport creating ...');
-      const transportOptions = (await this.socketService.io.emitWithAck(
-        'createConsumerTransport',
-        {
-          roomId: this.roomId,
-          forceTcp: false,
-        },
-      )) as TransportOptions;
-
-      if (transportOptions.error) {
-        console.error(transportOptions.error);
-        return;
-      }
-      console.log('Consumer transport created');
-
-      const transport = this.device.createRecvTransport(transportOptions);
-
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-        console.log('connectConsumerTransport');
-        try {
-          await this.socketService.io.emitWithAck('connectConsumerTransport', {
-            roomId: this.roomId,
-            dtlsParameters,
-          });
-          console.log('connectConsumerTransport connected');
-          callback();
-        } catch (error) {
-          console.log(error);
-          errback(error);
-        }
-      });
-
-      transport.on('connectionstatechange', (state) => {
-        switch (state) {
-          case 'connecting':
-            console.log('Mediasoup state: connecting');
-            break;
-
-          case 'connected':
-            console.log('Mediasoup state: connected');
-            // console.log('Stream obj', this.stream)
-            this.socketService.io.emit('resume', { roomId: this.roomId });
-            break;
-
-          case 'failed':
-            console.log('Mediasoup state: failed');
-            transport.close();
-            break;
-
-          default:
-            break;
-        }
-      });
-
-      this.remoteStream = await this.consume(transport);
-    }
-  }
-
-  async consume(transport: Transport<AppData>) {
-    if (this.device) {
-      console.log('consume');
+      console.log(`consume producerId = ${producerId}`);
       const { rtpCapabilities } = this.device;
       const data = await this.socketService.io.emitWithAck('consume', {
         roomId: this.roomId,
         rtpCapabilities,
+        producerId,
       });
-      const { producerId, id, kind, rtpParameters } = data;
+      const { id, kind, rtpParameters } = data;
       console.log('consume data received', data);
 
-      const consumer = await transport.consume({
+      const consumer = await this.transport.consumer!.consume({
         id,
         producerId,
         kind,
         rtpParameters,
       });
+      this.socketService.io.emit('resume', {
+        roomId: this.roomId,
+        consumerId: id,
+      });
       const stream = new MediaStream();
       stream.addTrack(consumer.track);
+      this.streams.remote.push(stream);
       console.log('consumed stream', stream);
-      return stream;
     } else {
       console.log('Mediasoup consume error (device not created)');
     }
