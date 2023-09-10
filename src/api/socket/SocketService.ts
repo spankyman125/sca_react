@@ -14,7 +14,7 @@ export default class SocketService {
   io: Socket;
 
   constructor(access_token: string) {
-    this.io = io('ws://192.168.1.11:30125', {
+    this.io = io('wss://192.168.1.11:30125', {
       extraHeaders: {
         Authorization: `Bearer ${access_token}`,
       },

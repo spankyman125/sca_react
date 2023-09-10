@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 urls.txt
+secrets/fullchain.pem
+secrets/privkey.pem
