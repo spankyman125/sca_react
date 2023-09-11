@@ -13,6 +13,7 @@ import {
 } from 'mediasoup-client/lib/types';
 import { makeAutoObservable } from 'mobx';
 import AppStore from './ui/App/AppStore';
+import { User } from '../api/http/interfaces';
 
 export interface TransportParams {
   id: string;
@@ -21,23 +22,26 @@ export interface TransportParams {
   dtlsParameters: DtlsParameters;
 }
 
+interface UserConsumer {
+  user: User;
+  consumer: Consumer;
+}
+
 export default class MediasoupStore {
   appStore: AppStore;
   device?: Device;
 
   transport: {
-    consumer: Transport | undefined;
-    producer: Transport | undefined;
+    consumer?: Transport;
+    producer?: Transport;
   } = { consumer: undefined, producer: undefined };
 
-  consumers: Map<string, Consumer> = new Map();
-  producer: Producer | undefined;
+  userConsumers: Map<string, UserConsumer> = new Map();
+  producer?: Producer;
 
-  routerRtpCapabilities: RtpCapabilities | undefined = undefined;
+  routerRtpCapabilities?: RtpCapabilities;
 
-  get roomId() {
-    return this.appStore.activeRoomId;
-  }
+  roomCallId?: number;
 
   get socketService() {
     return this.appStore.socketService;
@@ -68,9 +72,10 @@ export default class MediasoupStore {
       'mediasoup:producer:close',
       (producerId: string) => {
         console.log('mediasoup:producer:close', producerId);
-        this.consumers.forEach((consumer, _key, map) => {
-          if (consumer.producerId === producerId) consumer.close();
-          map.delete(consumer.id);
+        this.userConsumers.forEach((userConsumer, _key, map) => {
+          if (userConsumer.consumer.producerId === producerId)
+            userConsumer.consumer.close();
+          map.delete(userConsumer.consumer.id);
         });
       },
     );
@@ -79,17 +84,18 @@ export default class MediasoupStore {
       'mediasoup:consumer:close',
       (consumerId: string) => {
         console.log('mediasoup:consumer:close', consumerId);
-        this.consumers.get(consumerId)?.close();
+        this.userConsumers.get(consumerId)?.consumer.close();
       },
     );
   }
 
   async join() {
+    this.roomCallId = this.appStore.activeRoomId;
     console.log('mediasoup:join');
     await this.getRtpCapabilities();
     await this.loadDevice();
     const data = (await this.socketService.io.emitWithAck('mediasoup:join', {
-      roomId: this.roomId,
+      roomId: this.roomCallId,
     })) as {
       consumerTransportOptions: TransportOptions<AppData>;
       producerTransportOptions: TransportOptions<AppData>;
@@ -113,7 +119,7 @@ export default class MediasoupStore {
       console.log('mediasoup:connect:producer');
       try {
         await this.socketService.io.emitWithAck('mediasoup:connect:producer', {
-          roomId: this.roomId,
+          roomId: this.roomCallId,
           dtlsParameters,
         });
         console.log('mediasoup:connect:producer connected');
@@ -131,7 +137,7 @@ export default class MediasoupStore {
         try {
           console.log('produce');
           const { id } = await this.socketService.io.emitWithAck('produce', {
-            roomId: this.roomId,
+            roomId: this.roomCallId,
             kind,
             rtpParameters,
           });
@@ -189,7 +195,7 @@ export default class MediasoupStore {
           await this.socketService.io.emitWithAck(
             'mediasoup:connect:consumer',
             {
-              roomId: this.roomId,
+              roomId: this.roomCallId,
               dtlsParameters,
               transportId: options.id,
             },
@@ -228,7 +234,7 @@ export default class MediasoupStore {
     console.log('Receiving rtp caps ...');
     this.routerRtpCapabilities = (await this.socketService.io.emitWithAck(
       'mediasoup:getRTPCaps',
-      { roomId: this.roomId },
+      { roomId: this.roomCallId },
     )) as RtpCapabilities;
     console.log('RtpCaps received:');
   }
@@ -276,11 +282,11 @@ export default class MediasoupStore {
       console.log(`consume producerId = ${producerId}`);
       const { rtpCapabilities } = this.device;
       const data = await this.socketService.io.emitWithAck('consume', {
-        roomId: this.roomId,
+        roomId: this.roomCallId,
         rtpCapabilities,
         producerId,
       });
-      const { id, kind, rtpParameters } = data;
+      const { id, kind, rtpParameters, user } = data;
       console.log('consume data received', data);
 
       const consumer = await this.transport.consumer!.consume({
@@ -289,9 +295,9 @@ export default class MediasoupStore {
         kind,
         rtpParameters,
       });
-      this.consumers.set(consumer.id, consumer);
+      this.userConsumers.set(consumer.id, { consumer, user });
       this.socketService.io.emit('resume', {
-        roomId: this.roomId,
+        roomId: this.roomCallId,
         consumerId: id,
       });
     } else {
