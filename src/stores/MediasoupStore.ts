@@ -23,18 +23,14 @@ export interface TransportParams {
 
 export default class MediasoupStore {
   appStore: AppStore;
-  device: Device | undefined = undefined;
-  streams: { local: MediaStream | undefined; remote: MediaStream[] } = {
-    local: undefined,
-    remote: [],
-  };
+  device?: Device;
 
   transport: {
     consumer: Transport | undefined;
     producer: Transport | undefined;
   } = { consumer: undefined, producer: undefined };
 
-  consumers: Consumer[] = [];
+  consumers: Map<string, Consumer> = new Map();
   producer: Producer | undefined;
 
   routerRtpCapabilities: RtpCapabilities | undefined = undefined;
@@ -67,6 +63,25 @@ export default class MediasoupStore {
       console.log('mediasoup:producer:new', producerId);
       void this.consume(producerId);
     });
+
+    this.socketService.io.on(
+      'mediasoup:producer:close',
+      (producerId: string) => {
+        console.log('mediasoup:producer:close', producerId);
+        this.consumers.forEach((consumer, _key, map) => {
+          if (consumer.producerId === producerId) consumer.close();
+          map.delete(consumer.id);
+        });
+      },
+    );
+
+    this.socketService.io.on(
+      'mediasoup:consumer:close',
+      (consumerId: string) => {
+        console.log('mediasoup:consumer:close', consumerId);
+        this.consumers.get(consumerId)?.close();
+      },
+    );
   }
 
   async join() {
@@ -196,8 +211,6 @@ export default class MediasoupStore {
 
         case 'connected':
           console.log('Mediasoup state: connected');
-          // console.log('Stream obj', this.stream)
-          // this.socketService.io.emit('resume', { roomId: this.roomId });
           break;
 
         case 'failed':
@@ -251,7 +264,6 @@ export default class MediasoupStore {
           });
           break;
       }
-      this.streams.local = stream;
       return stream;
     } catch (err) {
       console.error('getUserMedia() failed:', err);
@@ -277,15 +289,11 @@ export default class MediasoupStore {
         kind,
         rtpParameters,
       });
-      this.consumers.push(consumer);
+      this.consumers.set(consumer.id, consumer);
       this.socketService.io.emit('resume', {
         roomId: this.roomId,
         consumerId: id,
       });
-      const stream = new MediaStream();
-      stream.addTrack(consumer.track);
-      this.streams.remote.push(stream);
-      console.log('consumed stream', stream);
     } else {
       console.log('Mediasoup consume error (device not created)');
     }

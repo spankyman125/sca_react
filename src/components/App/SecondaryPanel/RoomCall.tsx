@@ -7,15 +7,15 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
   return (
     <Box height={300} bgcolor={'grey.900'}>
       Local
-      {store.mediasoupStore.streams.local && (
-        <Audio stream={store.mediasoupStore.streams.local} />
+      {store.mediasoupStore.producer?.track && (
+        <Audio track={store.mediasoupStore.producer?.track} />
       )}
       Remote:
-      {store.mediasoupStore.streams.remote.map((stream, index) => {
+      {[...store.mediasoupStore.consumers].map(([id, consumer]) => {
         return (
           <>
-            {index}
-            <Audio stream={stream} />
+            {consumer.id}
+            <Audio track={consumer.track} />
           </>
         );
       })}
@@ -41,13 +41,15 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
 //   );
 // });
 
-const Audio = observer(({ stream }: { stream: MediaStream }) => {
-  const mediaRecorder = new MediaRecorder(stream);
-  mediaRecorder.start();
+const Audio = observer(({ track }: { track: MediaStreamTrack }) => {
+  const stream = new MediaStream();
+  stream.addTrack(track);
+  const recorder = new MediaRecorder(stream);
+  recorder.start();
   return (
     <>
       <LiveAudioVisualizer
-        mediaRecorder={mediaRecorder}
+        mediaRecorder={recorder}
         width={100}
         height={100}
         barWidth={2}
