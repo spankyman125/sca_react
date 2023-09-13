@@ -14,41 +14,45 @@ import { LiveAudioVisualizer } from 'react-audio-visualize';
 import { User } from '../../../api/http/interfaces';
 import { STATIC_URL } from '../../../consts';
 import RoomCallUI from '../../../stores/ui/App/RoomPanel/RoomCallUI';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
   return (
-    <Box bgcolor={'grey.900'} padding={2}>
-      <Grid2 container spacing={2} maxHeight={300}>
-        {store.userConsumers.map(({ user, track }) => (
-          <Grid2
-            xs
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            flexBasis={'auto'}
-          >
-            <UserCallBadge track={track} user={user} />
+    <Box bgcolor={'grey.900'}>
+      <Accordion TransitionProps={{ unmountOnExit: true }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Box sx={{ display: 'flex', gap: 10, flexGrow: 1 }}>
+            <Typography sx={{ alignSelf: 'center' }}>
+              Call in progress
+            </Typography>
+            <AvatarGroup sx={{ flexGrow: 1 }}>
+              {store.userConsumers.map(({ user }) => (
+                <Avatar
+                  alt={user.pseudonym}
+                  src={STATIC_URL + user.avatarUrl}
+                  sx={{ width: 30, height: 30 }}
+                />
+              ))}
+            </AvatarGroup>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid2 container spacing={2} maxHeight={300}>
+            {store.userConsumers.map(({ user, track }) => (
+              <Grid2
+                xs
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flexBasis={'auto'}
+              >
+                <UserCallBadge track={track} user={user} />
+              </Grid2>
+            ))}
           </Grid2>
-        ))}
-      </Grid2>
+        </AccordionDetails>
+      </Accordion>
     </Box>
-  );
-});
-
-const CallInfoAccordion = observer(() => {
-  return (
-    <Accordion TransitionProps={{ unmountOnExit: true }}>
-      <AccordionSummary>
-        <Typography>Call in progress</Typography>
-        <AvatarGroup total={24}>
-          <Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-          <Avatar alt="Travis Howard" src="/static/images/avatar/2.jpg" />
-          <Avatar alt="Agnes Walker" src="/static/images/avatar/4.jpg" />
-          <Avatar alt="Trevor Henderson" src="/static/images/avatar/5.jpg" />
-        </AvatarGroup>
-      </AccordionSummary>
-      <AccordionDetails></AccordionDetails>
-    </Accordion>
   );
 });
 
@@ -87,6 +91,7 @@ const UserCallBadge = observer(
           width: 100,
           borderRadius: 50,
           backgroundImage: `url(${STATIC_URL + user.avatarUrl})`,
+          backgroundSize: 'contain',
           overflow: 'hidden',
         }}
       >
