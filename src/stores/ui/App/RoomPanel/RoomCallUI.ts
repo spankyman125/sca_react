@@ -1,12 +1,13 @@
 import { makeAutoObservable } from 'mobx';
 import { User } from '../../../../api/http/interfaces';
 import RoomUI from './RoomUI';
+import { authStore } from '../../../AuthStore';
 
 export default class RoomCallUI {
   roomUI: RoomUI;
 
-  get isCalling() {
-    return this.roomUI.appUI.mediasoupStore.roomCallId === this.roomUI.roomId;
+  get callInProgress() {
+    return this.roomUI.appUI.mediasoupStore.callInProgress;
   }
 
   get userConsumers(): { track: MediaStreamTrack; user: User }[] {
@@ -17,6 +18,11 @@ export default class RoomCallUI {
         user: userConsumer.user,
       });
     }
+    if (this.mediasoupStore.producer?.track)
+      users.push({
+        track: this.mediasoupStore.producer.track,
+        user: authStore.user!,
+      });
     return users;
   }
 

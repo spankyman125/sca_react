@@ -43,6 +43,8 @@ export default class MediasoupStore {
 
   roomCallId?: number;
 
+  callInProgress = false;
+
   get socketService() {
     return this.appStore.socketService;
   }
@@ -89,6 +91,21 @@ export default class MediasoupStore {
     );
   }
 
+  leave() {
+    this.device = undefined;
+    this.socketService.io.emit('mediasoup:leave', {
+      roomId: this.roomCallId,
+    });
+    this.transport.consumer?.close();
+    this.transport.producer?.close();
+    this.userConsumers = new Map();
+    this.producer = undefined;
+    this.routerRtpCapabilities = undefined;
+    this.transport = { consumer: undefined, producer: undefined };
+    this.roomCallId = undefined;
+    this.callInProgress = false;
+  }
+
   async join() {
     this.roomCallId = this.appStore.activeRoomId;
     console.log('mediasoup:join');
@@ -109,6 +126,7 @@ export default class MediasoupStore {
       await this.consume(producerId);
     }
     console.log('Mediasoup room joined');
+    this.callInProgress = true;
   }
 
   async connectProducerTransport(options: TransportOptions<AppData>) {

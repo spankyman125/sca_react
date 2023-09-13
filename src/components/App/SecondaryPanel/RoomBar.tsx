@@ -10,6 +10,8 @@ import RoomBarUI from '../../../stores/ui/App/RoomPanel/RoomBarUI';
 import { Theme } from '../App';
 import { RoomAddDialog } from './RoomAddDialog';
 import CallIcon from '@mui/icons-material/Call';
+import CallEndIcon from '@mui/icons-material/CallEnd';
+import MediasoupStore from '../../../stores/MediasoupStore';
 
 export const SecondaryBar = observer(({ store }: { store: RoomBarUI }) => {
   const onePageLayout = useMediaQuery((theme: Theme) =>
@@ -33,9 +35,7 @@ export const SecondaryBar = observer(({ store }: { store: RoomBarUI }) => {
         >
           {store.roomUI.room?.name}
         </Typography>
-        <CallButton
-          onClick={() => void store.roomUI.appUI.mediasoupStore.join()}
-        />
+        <CallButton store={store.roomUI.appUI.mediasoupStore} />
         <IconButton
           color="inherit"
           onClick={() => store.roomUI.roomAddDialogUI.setOpen(true)}
@@ -77,10 +77,12 @@ const UsersButton = ({
   );
 };
 
-const CallButton = ({ onClick }: { onClick: () => void }) => {
+const CallButton = observer(({ store }: { store: MediasoupStore }) => {
   return (
-    <IconButton onClick={onClick}>
-      <CallIcon />
+    <IconButton
+      onClick={store.callInProgress ? () => store.leave() : () => store.join()}
+    >
+      {store.callInProgress ? <CallEndIcon /> : <CallIcon />}
     </IconButton>
   );
-};
+});

@@ -17,43 +17,46 @@ import RoomCallUI from '../../../stores/ui/App/RoomPanel/RoomCallUI';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
-  return (
-    <Box bgcolor={'grey.900'}>
-      <Accordion TransitionProps={{ unmountOnExit: true }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Box sx={{ display: 'flex', gap: 10, flexGrow: 1 }}>
-            <Typography sx={{ alignSelf: 'center' }}>
-              Call in progress
-            </Typography>
-            <AvatarGroup sx={{ flexGrow: 1 }}>
-              {store.userConsumers.map(({ user }) => (
-                <Avatar
-                  alt={user.pseudonym}
-                  src={STATIC_URL + user.avatarUrl}
-                  sx={{ width: 30, height: 30 }}
-                />
+  if (store.callInProgress)
+    return (
+      <Box bgcolor={'grey.900'}>
+        <Accordion TransitionProps={{ unmountOnExit: true }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ display: 'flex', gap: 10, flexGrow: 1 }}>
+              <Typography sx={{ alignSelf: 'center' }}>
+                Call in progress
+              </Typography>
+              <AvatarGroup sx={{ flexGrow: 1 }}>
+                {store.userConsumers.map(({ user }) => (
+                  <Avatar
+                    key={user.id}
+                    alt={user.pseudonym}
+                    src={STATIC_URL + user.avatarUrl}
+                    sx={{ width: 30, height: 30 }}
+                  />
+                ))}
+              </AvatarGroup>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Grid2 container spacing={2} maxHeight={300}>
+              {store.userConsumers.map(({ user, track }) => (
+                <Grid2
+                  key={user.id}
+                  xs
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  flexBasis={'auto'}
+                >
+                  <UserCallBadge track={track} user={user} />
+                </Grid2>
               ))}
-            </AvatarGroup>
-          </Box>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid2 container spacing={2} maxHeight={300}>
-            {store.userConsumers.map(({ user, track }) => (
-              <Grid2
-                xs
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                flexBasis={'auto'}
-              >
-                <UserCallBadge track={track} user={user} />
-              </Grid2>
-            ))}
-          </Grid2>
-        </AccordionDetails>
-      </Accordion>
-    </Box>
-  );
+            </Grid2>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
+    );
 });
 
 const AudioVisualizer = observer(({ track }: { track: MediaStreamTrack }) => {
