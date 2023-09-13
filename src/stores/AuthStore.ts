@@ -57,7 +57,6 @@ class AuthStore {
       }
     } else {
       this.status = AuthStatus.Unauthorized;
-      throw new Error('No previous session');
     }
   }
 

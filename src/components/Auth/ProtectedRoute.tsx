@@ -1,6 +1,6 @@
-import { router } from 'main';
 import { observer } from 'mobx-react-lite';
 import { AuthStatus, authStore } from '../../stores/AuthStore';
+import Auth from './Auth';
 import Loading from './Loading';
 
 const ProtectedRoute = observer(
@@ -11,7 +11,7 @@ const ProtectedRoute = observer(
       case AuthStatus.Pending:
         return <Loading />;
       case AuthStatus.Unauthorized:
-        void router.navigate('/auth');
+        return <Auth />;
     }
   },
 );
