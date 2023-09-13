@@ -10,11 +10,11 @@ import Typography from '@mui/material/Typography';
 import { observer } from 'mobx-react-lite';
 import { SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthAPI from '../../api/http/Auth';
 import { ApiError } from '../../api/http/Utilities';
 import { AuthStatus, authStore } from '../../stores/AuthStore';
 import { authUI } from '../../stores/ui/Auth/AuthUI';
 import Loading from './Loading';
+import UsersAPI from '../../api/http/Users';
 
 // ie11 polyfills
 // import 'formdata-polyfill';
@@ -65,7 +65,7 @@ const Auth = observer(() => {
 
     if (authUI.isSignUp)
       if (password === password_repeat)
-        AuthAPI.signUp(username, password, pseudonym)
+        UsersAPI.createUser(username, password, pseudonym)
           .then(() => authStore.login(username, password, remember))
           .catch((error) => {
             if (error instanceof ApiError) {

@@ -15,17 +15,6 @@ export default class AuthAPI extends HttpBase {
     });
   }
 
-  static async signUp(username: string, password: string, pseudonym: string) {
-    return api<Credentials>(this.path + 'users', {
-      method: 'POST',
-      body: JSON.stringify({
-        username: username,
-        password: password,
-        pseudonym: pseudonym,
-      }),
-    });
-  }
-
   static async refresh(refresh_token: string) {
     return api<Credentials>(this.path + '/refresh', {
       method: 'POST',
