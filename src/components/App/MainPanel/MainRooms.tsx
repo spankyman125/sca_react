@@ -1,17 +1,20 @@
+import PhoneForwardedIcon from '@mui/icons-material/PhoneForwarded';
 import {
   Avatar,
+  Box,
   List,
   ListItem,
   ListItemAvatar,
   ListItemButton,
   ListItemText,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { router } from 'main';
 import { observer } from 'mobx-react-lite';
 import { Room } from '../../../api/http/interfaces';
-import MainRoomsUI from '../../../stores/ui/App/MainPanel/MainRoomsUI';
 import { STATIC_URL } from '../../../consts';
+import MainRoomsUI from '../../../stores/ui/App/MainPanel/MainRoomsUI';
 
 const MainRooms = observer(({ store }: { store: MainRoomsUI }) => {
   return (
@@ -25,6 +28,9 @@ const MainRooms = observer(({ store }: { store: MainRoomsUI }) => {
           key={room.id}
           room={room}
           selected={room.id === store.activeRoomId}
+          highlighted={
+            room.id === store.mainPanelUI.appUI.mediasoupStore.roomCallId
+          }
         />
       ))}
     </List>
@@ -32,7 +38,16 @@ const MainRooms = observer(({ store }: { store: MainRoomsUI }) => {
 });
 
 const RoomListItem = observer(
-  ({ room, selected }: { room: Room; selected: boolean }) => {
+  ({
+    room,
+    selected,
+    highlighted,
+  }: {
+    room: Room;
+    selected: boolean;
+    highlighted: boolean;
+  }) => {
+    const theme = useTheme();
     return (
       <ListItem disablePadding key={room.id}>
         <ListItemButton
@@ -44,7 +59,18 @@ const RoomListItem = observer(
             <Avatar alt={room.name} src={STATIC_URL + room.avatarUrl} />
           </ListItemAvatar>
           <ListItemText
-            primary={room.name}
+            primary={
+              <Box display={'flex'} gap={1} alignItems={'center'}>
+                {highlighted && (
+                  <PhoneForwardedIcon sx={{ fontSize: 16 }} color="success" />
+                )}
+                <Typography
+                  color={highlighted ? theme.palette.success.main : undefined}
+                >
+                  {room.name}
+                </Typography>
+              </Box>
+            }
             secondary={
               <Typography
                 sx={{
