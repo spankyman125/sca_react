@@ -27,7 +27,7 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
                 Call in progress
               </Typography>
               <AvatarGroup sx={{ flexGrow: 1 }}>
-                {store.userConsumers.map(({ user }) => (
+                {store.userAudios.map(({ user }) => (
                   <Avatar
                     key={user.id}
                     alt={user.pseudonym}
@@ -40,7 +40,7 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
           </AccordionSummary>
           <AccordionDetails>
             <Grid2 container spacing={2} maxHeight={300}>
-              {store.userConsumers.map(({ user, track }) => (
+              {store.userAudios.map(({ user, recorder }) => (
                 <Grid2
                   key={user.id}
                   xs
@@ -49,7 +49,7 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
                   alignItems="center"
                   flexBasis={'auto'}
                 >
-                  <UserCallBadge track={track} user={user} />
+                  <UserCallBadge recorder={recorder} user={user} />
                 </Grid2>
               ))}
             </Grid2>
@@ -59,13 +59,9 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
     );
 });
 
-const AudioVisualizer = observer(({ track }: { track: MediaStreamTrack }) => {
-  const stream = new MediaStream();
-  stream.addTrack(track);
-  const recorder = new MediaRecorder(stream);
-  recorder.start();
-  return (
-    <>
+const AudioVisualizer = observer(
+  ({ recorder }: { recorder: MediaRecorder }) => {
+    return (
       <LiveAudioVisualizer
         mediaRecorder={recorder}
         width={100}
@@ -74,18 +70,12 @@ const AudioVisualizer = observer(({ track }: { track: MediaStreamTrack }) => {
         gap={1}
         barColor={'#f76565'}
       />
-      <audio
-        autoPlay
-        ref={(ref) => {
-          if (ref) ref.srcObject = stream;
-        }}
-      ></audio>
-    </>
-  );
-});
+    );
+  },
+);
 
 const UserCallBadge = observer(
-  ({ user, track }: { user: User; track: MediaStreamTrack }) => {
+  ({ user, recorder }: { user: User; recorder: MediaRecorder }) => {
     return (
       <Paper
         elevation={2}
@@ -98,7 +88,7 @@ const UserCallBadge = observer(
           overflow: 'hidden',
         }}
       >
-        <AudioVisualizer track={track} />
+        <AudioVisualizer recorder={recorder} />
       </Paper>
     );
   },

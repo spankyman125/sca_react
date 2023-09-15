@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Device } from 'mediasoup-client';
-import { RtpCapabilities } from 'mediasoup-client/lib/RtpParameters';
+import {
+  MediaKind,
+  RtpCapabilities,
+  RtpParameters,
+} from 'mediasoup-client/lib/RtpParameters';
 import {
   AppData,
   Consumer,
@@ -22,9 +26,54 @@ export interface TransportParams {
   dtlsParameters: DtlsParameters;
 }
 
-interface UserConsumer {
+class UserConsumer {
   user: User;
   consumer: Consumer;
+
+  _audio?: HTMLAudioElement;
+  _stream?: MediaStream;
+  _recorder?: MediaRecorder;
+
+  constructor(user: User, consumer: Consumer) {
+    this.user = user;
+    this.consumer = consumer;
+  }
+
+  play() {
+    this.audio.addEventListener('canplay', () => {
+      void this.audio.play();
+    });
+  }
+
+  pause() {
+    this.audio.pause();
+  }
+
+  private get stream(): MediaStream {
+    if (!this._stream) {
+      const stream = new MediaStream();
+      stream.addTrack(this.consumer.track);
+      this._stream = stream;
+    }
+    return this._stream;
+  }
+
+  get audio(): HTMLAudioElement {
+    if (!this._audio) {
+      const audio = new Audio();
+      audio.srcObject = this.stream;
+      this._audio = audio;
+    }
+    return this._audio;
+  }
+
+  get recorder(): MediaRecorder {
+    if (!this._recorder) {
+      this._recorder = new MediaRecorder(this.stream);
+      this._recorder.start();
+    }
+    return this._recorder;
+  }
 }
 
 export default class MediasoupStore {
@@ -53,42 +102,25 @@ export default class MediasoupStore {
     makeAutoObservable(this);
     this.appStore = appStore;
 
-    this.socketService.io.on('disconnect', () => {
-      console.log('Mediasoup disconnected');
+    this.socketService.io.on('mediasoup:producer:new', (id: string) => {
+      console.log('mediasoup:producer:new', id);
+      void this.consume(id);
     });
 
-    this.socketService.io.on('connect_error', (error) => {
-      console.error(
-        'Mediasoup connection failed %s (%s)',
-        '/server',
-        error.message,
-      );
+    this.socketService.io.on('mediasoup:producer:close', (id: string) => {
+      console.log('mediasoup:producer:close', id);
+      this.userConsumers.forEach((userConsumer) => {
+        if (userConsumer.consumer.producerId === id) {
+          userConsumer.consumer.close();
+          this.userConsumers.delete(userConsumer.consumer.id);
+        }
+      });
     });
 
-    this.socketService.io.on('mediasoup:producer:new', (producerId: string) => {
-      console.log('mediasoup:producer:new', producerId);
-      void this.consume(producerId);
+    this.socketService.io.on('mediasoup:consumer:close', (id: string) => {
+      console.log('mediasoup:consumer:close', id);
+      this.userConsumers.get(id)?.consumer.close();
     });
-
-    this.socketService.io.on(
-      'mediasoup:producer:close',
-      (producerId: string) => {
-        console.log('mediasoup:producer:close', producerId);
-        this.userConsumers.forEach((userConsumer, _key, map) => {
-          if (userConsumer.consumer.producerId === producerId)
-            userConsumer.consumer.close();
-          map.delete(userConsumer.consumer.id);
-        });
-      },
-    );
-
-    this.socketService.io.on(
-      'mediasoup:consumer:close',
-      (consumerId: string) => {
-        console.log('mediasoup:consumer:close', consumerId);
-        this.userConsumers.get(consumerId)?.consumer.close();
-      },
-    );
   }
 
   leave() {
@@ -299,11 +331,16 @@ export default class MediasoupStore {
     if (this.device) {
       console.log(`consume producerId = ${producerId}`);
       const { rtpCapabilities } = this.device;
-      const data = await this.socketService.io.emitWithAck('consume', {
+      const data = (await this.socketService.io.emitWithAck('consume', {
         roomId: this.roomCallId,
         rtpCapabilities,
         producerId,
-      });
+      })) as {
+        id: string;
+        kind: MediaKind;
+        rtpParameters: RtpParameters;
+        user: User;
+      };
       const { id, kind, rtpParameters, user } = data;
       console.log('consume data received', data);
 
@@ -313,11 +350,17 @@ export default class MediasoupStore {
         kind,
         rtpParameters,
       });
-      this.userConsumers.set(consumer.id, { consumer, user });
+      const userConsumer = new UserConsumer(user, consumer);
+      consumer.on('@close', () => {
+        userConsumer.pause();
+      });
+      this.userConsumers.set(consumer.id, userConsumer);
+
       this.socketService.io.emit('resume', {
         roomId: this.roomCallId,
         consumerId: id,
       });
+      userConsumer.play();
     } else {
       console.log('Mediasoup consume error (device not created)');
     }
