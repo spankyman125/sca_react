@@ -39,7 +39,7 @@ const RoomCall = observer(({ store }: { store: RoomCallUI }) => {
             </Box>
           </AccordionSummary>
           <AccordionDetails>
-            <Grid2 container spacing={2} maxHeight={300}>
+            <Grid2 container spacing={2} maxHeight={300} paddingBottom={5}>
               {store.userAudios.map(({ user, recorder }) => (
                 <Grid2
                   key={user.id}
