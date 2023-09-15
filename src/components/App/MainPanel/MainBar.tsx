@@ -18,7 +18,9 @@ const MainBar = memo(({ store }: { store: MainBarUI }) => {
     <AppBar position="static">
       <Toolbar sx={{ bgcolor: 'background.default' }}>
         <MenuButton />
-        <SearchField handleChange={(e) => console.log(e.target.value)} />
+        <SearchField
+          handleChange={(e) => store.setSearchedText(e.target.value)}
+        />
         <CreateRoomButton
           handleClick={() => store.roomCreateDialogUI.setOpen(true)}
         />

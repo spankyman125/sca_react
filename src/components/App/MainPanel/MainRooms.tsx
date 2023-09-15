@@ -23,7 +23,7 @@ const MainRooms = observer(({ store }: { store: MainRoomsUI }) => {
         overflow: 'auto',
       }}
     >
-      {[...store.rooms].map(([, room]) => (
+      {store.rooms.map((room) => (
         <RoomListItem
           key={room.id}
           room={room}

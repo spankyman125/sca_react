@@ -1,14 +1,21 @@
 import { makeAutoObservable } from 'mobx';
 import MainPanelUI from './MainPanelUI';
-import RoomCreateDialogUI from './RoomCreateDialogUI';
+import { Room } from '../../../../api/http/interfaces';
 
 export default class MainRoomsUI {
   mainPanelUI: MainPanelUI;
 
-  roomCreateDialogUI: RoomCreateDialogUI;
-
-  get rooms() {
-    return this.mainPanelUI.appUI.rooms;
+  get rooms(): Room[] {
+    const rooms: Room[] = [];
+    this.mainPanelUI.appUI.rooms.forEach((room) => {
+      if (
+        room.name
+          .toLowerCase()
+          .includes(this.mainPanelUI.mainBarUI.searchedText.toLowerCase())
+      )
+        rooms.push(room);
+    });
+    return rooms;
   }
 
   get activeRoomId() {
@@ -18,6 +25,5 @@ export default class MainRoomsUI {
   constructor(mainPanelUI: MainPanelUI) {
     makeAutoObservable(this);
     this.mainPanelUI = mainPanelUI;
-    this.roomCreateDialogUI = new RoomCreateDialogUI(this);
   }
 }
