@@ -3,16 +3,20 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { observer } from 'mobx-react-lite';
-import { memo, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { Message } from '../../../api/http/interfaces';
 import { STATIC_URL } from '../../../consts';
 import RoomMessagesUI from '../../../stores/ui/App/RoomPanel/RoomMessagesUI';
+import { userInfoPanelUI } from '../../../stores/ui/App/MainPanel/UserInfoPanelUI';
 
 const MessageRow = memo(({ message }: { message: Message }) => {
   return (
     <ListItem component="div" disablePadding>
-      <ListItemButton alignItems="flex-start">
+      <ListItemButton
+        alignItems="flex-start"
+        onClick={() => void userInfoPanelUI.open(message.userId)}
+      >
         <ListItemAvatar>
           <Avatar
             alt={message.user?.pseudonym}

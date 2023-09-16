@@ -1,23 +1,31 @@
-import MenuIcon from '@mui/icons-material/Menu';
+import CreateRoomIcon from '@mui/icons-material/MapsUgc';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   AppBar,
+  Avatar,
   IconButton,
   InputBase,
   Toolbar,
   alpha,
   styled,
 } from '@mui/material';
+import { observer } from 'mobx-react-lite';
 import React, { memo } from 'react';
-import CreateRoomIcon from '@mui/icons-material/MapsUgc';
+import { STATIC_URL } from '../../../consts';
+import { authStore } from '../../../stores/AuthStore';
 import MainBarUI from '../../../stores/ui/App/MainPanel/MainBarUI';
+import { userInfoPanelUI } from '../../../stores/ui/App/MainPanel/UserInfoPanelUI';
 import { RoomCreateDialog } from './CreateRoomDialog';
 
 const MainBar = memo(({ store }: { store: MainBarUI }) => {
   return (
     <AppBar position="static">
       <Toolbar sx={{ bgcolor: 'background.default' }}>
-        <MenuButton />
+        <ProfileButton
+          handleClick={() => {
+            void userInfoPanelUI.open(authStore.user!.id);
+          }}
+        />
         <SearchField
           handleChange={(e) => store.setSearchedText(e.target.value)}
         />
@@ -44,13 +52,23 @@ const CreateRoomButton = ({ handleClick }: { handleClick: () => void }) => {
   );
 };
 
-const MenuButton = () => {
-  return (
-    <IconButton size="large" edge="start" color="inherit" sx={{ mr: 1 }}>
-      <MenuIcon />
-    </IconButton>
-  );
-};
+const ProfileButton = observer(
+  ({ handleClick }: { handleClick: () => void }) => {
+    return (
+      <IconButton
+        onClick={handleClick}
+        edge="start"
+        color="inherit"
+        sx={{ mr: 1 }}
+      >
+        <Avatar
+          sx={{ width: 32, height: 32 }}
+          src={STATIC_URL + authStore.user!.avatarUrl}
+        />
+      </IconButton>
+    );
+  },
+);
 
 export const SearchField = ({
   handleChange,

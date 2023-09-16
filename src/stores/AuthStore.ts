@@ -11,7 +11,7 @@ export enum AuthStatus {
   Pending = 'pending',
 }
 
-interface UserInfo extends User {
+export interface UserInfo extends User {
   friends: User[];
 }
 
@@ -95,6 +95,13 @@ class AuthStore {
     this.refresh_token = '';
     this.remember = false;
     this.status = AuthStatus.Unauthorized;
+  }
+
+  removeFriend(id: number) {
+    if (this.user)
+      this.user.friends = this.user?.friends.filter(
+        (friend) => friend.id !== id,
+      );
   }
 }
 export const authStore = new AuthStore();
