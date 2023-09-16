@@ -96,6 +96,6 @@ export default class UsersAPI extends HttpBase {
   }
 
   static async getFriends(userId: number) {
-    return api<User[]>(`${this.path}/${userId}`);
+    return api<User[]>(`${this.path}/${userId}/friends`);
   }
 }
