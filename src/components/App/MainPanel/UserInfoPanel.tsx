@@ -62,12 +62,12 @@ const UserPanelCenter = observer(({ store }: { store: UserInfoPanelUI }) => {
       <Box sx={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
         <Box>
           <Avatar
-            src={STATIC_URL + store.user!.avatarUrl}
+            src={store.user?.avatarUrl && STATIC_URL + store.user?.avatarUrl}
             alt={store.user?.username}
             sx={{ height: 120, width: 120 }}
           ></Avatar>
         </Box>
-        <Box flexGrow={1} justifyContent={'center'}>
+        <Box flexGrow={1} display={'flex'} flexDirection={'column'}>
           <Typography>
             <b>Username: </b>
             {store.user?.username}
@@ -80,6 +80,29 @@ const UserPanelCenter = observer(({ store }: { store: UserInfoPanelUI }) => {
             <b>Status: </b>
             {store.user?.isOnline ? 'online' : 'offline'}
           </Typography>
+          {!store.isSelfUser && (
+            <Box display={'flex'} flexGrow={1}>
+              {authStore.user?.friends.find(
+                (friend) => friend.id === store.user?.id,
+              ) ? (
+                <Button
+                  sx={{ alignSelf: 'end' }}
+                  variant="outlined"
+                  onClick={() => void authStore.removeFriend(store.user!.id)}
+                >
+                  Remove friend
+                </Button>
+              ) : (
+                <Button
+                  sx={{ alignSelf: 'end' }}
+                  variant="outlined"
+                  onClick={() => void authStore.addFriend(store.user!.id)}
+                >
+                  Add friend
+                </Button>
+              )}
+            </Box>
+          )}
         </Box>
       </Box>
       <br />

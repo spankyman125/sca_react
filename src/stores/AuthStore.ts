@@ -98,10 +98,18 @@ class AuthStore {
   }
 
   removeFriend(id: number) {
-    if (this.user)
+    if (this.user) {
       this.user.friends = this.user?.friends.filter(
         (friend) => friend.id !== id,
       );
+      return UsersAPI.removeFriend(id);
+    }
+  }
+
+  async addFriend(id: number) {
+    if (this.user) {
+      this.user.friends.push(await UsersAPI.addFriend(id));
+    }
   }
 }
 export const authStore = new AuthStore();
