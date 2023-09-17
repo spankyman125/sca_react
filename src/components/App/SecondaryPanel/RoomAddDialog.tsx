@@ -30,6 +30,7 @@ import RoomAddDialogUI, {
   ProposedUser,
 } from '../../../stores/ui/App/RoomPanel/RoomAddDialogUI';
 import { SearchField } from '../MainPanel/MainBar';
+import { userInfoPanelUI } from '../../../stores/ui/App/MainPanel/UserInfoPanelUI';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -147,7 +148,10 @@ const ProposedUserItem = React.memo(
           </IconButton>
         }
       >
-        <ListItemButton alignItems="flex-start">
+        <ListItemButton
+          alignItems="flex-start"
+          onClick={() => void userInfoPanelUI.open(user.id)}
+        >
           <ListItemAvatar>
             <Avatar alt={user.pseudonym} src={STATIC_URL + user.avatarUrl} />
           </ListItemAvatar>
