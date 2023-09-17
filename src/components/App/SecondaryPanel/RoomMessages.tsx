@@ -1,18 +1,39 @@
-import { Avatar, Box, ListItemAvatar, useTheme } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  IconButton,
+  ListItemAvatar,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { observer } from 'mobx-react-lite';
-import { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { Message } from '../../../api/http/interfaces';
 import { STATIC_URL } from '../../../consts';
 import RoomMessagesUI from '../../../stores/ui/App/RoomPanel/RoomMessagesUI';
 import { userInfoPanelUI } from '../../../stores/ui/App/MainPanel/UserInfoPanelUI';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 const MessageRow = memo(({ message }: { message: Message }) => {
+  const [hovered, setHovered] = useState(false);
   return (
-    <ListItem component="div" disablePadding>
+    <ListItem
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      component="div"
+      disablePadding
+      secondaryAction={
+        hovered && (
+          <IconButton>
+            <MoreVertIcon />
+          </IconButton>
+        )
+      }
+    >
       <ListItemButton
         alignItems="flex-start"
         onClick={() => void userInfoPanelUI.open(message.userId)}
@@ -24,7 +45,20 @@ const MessageRow = memo(({ message }: { message: Message }) => {
           />
         </ListItemAvatar>
         <ListItemText
-          primary={`${message.user?.pseudonym || ''}`}
+          primary={
+            <>
+              <Typography>
+                {message.user?.pseudonym}
+                <Typography
+                  component={'span'}
+                  variant="caption"
+                  color={'GrayText'}
+                >
+                  {'  ' + new Date(message.createdAt).toLocaleTimeString()}
+                </Typography>
+              </Typography>
+            </>
+          }
           secondary={`${message.content} `}
           secondaryTypographyProps={{
             style: { whiteSpace: 'pre-wrap', wordWrap: 'break-word' },
