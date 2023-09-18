@@ -1,17 +1,42 @@
 import { makeAutoObservable, runInAction } from 'mobx';
+import React from 'react';
+import { GroupedVirtuosoHandle } from 'react-virtuoso';
 import RoomsAPI from '../../../../api/http/Rooms';
 import { Message } from '../../../../api/http/interfaces';
 import RoomUI from './RoomUI';
 
 export default class RoomMessagesUI {
   roomUI: RoomUI;
-  firstItemIndex = Number.MAX_SAFE_INTEGER / 2;
+  firstItemIndex = 1000;
   take = 50;
-  virtuosoRef: any;
+  virtuosoRef: any = React.createRef<GroupedVirtuosoHandle>();
   isLoading = true;
 
   get messages() {
     return this.roomUI.room?.messages?.slice().reverse() || [];
+  }
+
+  get dateGroups(): { dateGroupCounts: number[]; dateGroupDates: Date[] } {
+    if (this.messages.length === 0)
+      return { dateGroupCounts: [1], dateGroupDates: [] };
+    const dateGroupCounts: number[] = [];
+    const dateGroupDates: Date[] = [];
+    const currentGroupDate = new Date(this.messages[0].createdAt);
+    let currentGroupCount = 0;
+    this.messages.forEach((message) => {
+      const messageDate = new Date(message.createdAt);
+      if (messageDate.getDate() === currentGroupDate.getDate()) {
+        currentGroupCount++;
+      } else {
+        dateGroupCounts.push(currentGroupCount);
+        dateGroupDates.push(new Date(currentGroupDate.getTime()));
+        currentGroupCount = 1;
+        currentGroupDate.setTime(messageDate.getTime());
+      }
+    });
+    dateGroupCounts.push(currentGroupCount);
+    dateGroupDates.push(new Date(currentGroupDate.getTime()));
+    return { dateGroupCounts, dateGroupDates };
   }
 
   get initialTopMostItemIndex() {
@@ -37,18 +62,14 @@ export default class RoomMessagesUI {
     });
   }
 
-  setRef(ref: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    if (this.virtuosoRef !== ref) this.virtuosoRef = ref;
-  }
-
   addSelf(message: Message) {
     this.roomUI.addNewMessages(message);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    this.virtuosoRef.current.scrollToIndex({
+    (
+      this.virtuosoRef as React.MutableRefObject<GroupedVirtuosoHandle>
+    ).current.scrollToIndex({
       index: this.messages.length,
       align: 'end',
-      behaviour: 'smooth',
+      behavior: 'smooth',
     });
   }
 }
