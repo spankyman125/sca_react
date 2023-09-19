@@ -4,10 +4,10 @@ import { Message, User } from '../../../../api/http/interfaces';
 import RoomAddDialogUI from './RoomAddDialogUI';
 import RoomInfoUI from './RoomBar/RoomUsersUI';
 import RoomBarUI from './RoomBarUI';
+import RoomCallUI from './RoomCallUI';
 import RoomInputUI from './RoomInputUI';
 import RoomMessagesUI from './RoomMessagesUI';
 import SecondaryPanelUI from './RoomPanelUI';
-import RoomCallUI from './RoomCallUI';
 
 export default class RoomUI {
   secondaryPanelUI: SecondaryPanelUI;
@@ -65,5 +65,12 @@ export default class RoomUI {
 
   addOldMessages(...messages: Message[]) {
     this.room.messages?.push(...messages);
+  }
+
+  editMessage(messageId: number, content: string) {
+    const messageToEdit = this.room.messages?.find(
+      (message) => message.id === messageId,
+    );
+    if (messageToEdit) messageToEdit.content = content;
   }
 }

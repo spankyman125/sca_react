@@ -1,4 +1,4 @@
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import EditIcon from '@mui/icons-material/Edit';
 import {
   Avatar,
   Box,
@@ -11,67 +11,112 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { observer } from 'mobx-react-lite';
-import React, { memo, useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { GroupedVirtuoso, GroupedVirtuosoHandle } from 'react-virtuoso';
 import { Message } from '../../../api/http/interfaces';
 import { STATIC_URL } from '../../../consts';
+import { authStore } from '../../../stores/AuthStore';
 import { userInfoPanelUI } from '../../../stores/ui/App/MainPanel/UserInfoPanelUI';
 import RoomMessagesUI from '../../../stores/ui/App/RoomPanel/RoomMessagesUI';
 
-const MessageRow = memo(({ message }: { message: Message }) => {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <ListItem
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      component="div"
-      disablePadding
-      secondaryAction={
-        hovered && (
-          <IconButton>
-            <MoreVertIcon />
-          </IconButton>
-        )
-      }
-    >
-      <ListItemButton
-        alignItems="flex-start"
-        onClick={() => void userInfoPanelUI.open(message.userId)}
+const MessageRow = observer(
+  ({ message, store }: { message: Message; store: RoomMessagesUI }) => {
+    const [hovered, setHovered] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const inputRef = useRef<HTMLSpanElement>(null);
+
+    return (
+      <ListItem
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        component="div"
+        disablePadding
+        secondaryAction={
+          hovered &&
+          message.userId == authStore.user?.id && (
+            <IconButton
+              size="small"
+              onClick={() => {
+                setIsEditing(true);
+                setTimeout(function () {
+                  inputRef.current?.focus();
+                }, 0);
+              }}
+            >
+              <EditIcon />
+            </IconButton>
+          )
+        }
       >
-        <ListItemAvatar>
-          <Avatar
-            alt={message.user?.pseudonym}
-            src={STATIC_URL + (message.user?.avatarUrl || '')}
-          />
-        </ListItemAvatar>
-        <ListItemText
-          primary={
-            <Typography>
-              {message.user?.pseudonym}
-              <Typography
-                component={'span'}
-                variant="caption"
-                color={'GrayText'}
-              >
-                {` ${new Date(message.createdAt).toTimeString().split(' ')[0]}`}
+        <ListItemButton alignItems="flex-start">
+          <ListItemAvatar
+            onClick={() => void userInfoPanelUI.open(message.userId)}
+          >
+            <Avatar
+              alt={message.user?.pseudonym}
+              src={STATIC_URL + (message.user?.avatarUrl || '')}
+              sx={{ ':hover': { outline: 'solid white' } }}
+            />
+          </ListItemAvatar>
+          <ListItemText
+            primary={
+              <Typography>
+                {message.user?.pseudonym}
+                <Typography
+                  component={'span'}
+                  variant="caption"
+                  color={'GrayText'}
+                >
+                  {` ${
+                    new Date(message.createdAt).toTimeString().split(' ')[0]
+                  } #${message.id}`}
+                </Typography>
               </Typography>
-            </Typography>
-          }
-          secondary={`${message.content} `}
-          secondaryTypographyProps={{
-            style: { whiteSpace: 'pre-wrap', wordWrap: 'break-word' },
-          }}
-        />
-      </ListItemButton>
-    </ListItem>
-  );
-});
+            }
+            secondary={
+              <Typography
+                variant="body2"
+                color={'text.secondary'}
+                sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+                contentEditable={isEditing}
+                suppressContentEditableWarning={true}
+                ref={inputRef}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (e.code === 'Enter') {
+                    if (!e.shiftKey) {
+                      setIsEditing(false);
+                      setTimeout(() => {
+                        inputRef.current?.blur();
+                      }, 0);
+                      store.editMessage(
+                        message.id,
+                        inputRef.current?.textContent
+                          ? inputRef.current?.textContent
+                          : message.content,
+                      );
+                    }
+                  }
+                }}
+              >
+                {message.content}
+              </Typography>
+            }
+            disableTypography
+          />
+        </ListItemButton>
+      </ListItem>
+    );
+  },
+);
 
 const RoomMessages = observer(({ store }: { store: RoomMessagesUI }) => {
   const theme = useTheme();
   const itemContent = useCallback(
     (i: number) => (
-      <MessageRow message={store.messages[i - store.firstItemIndex]} />
+      <MessageRow
+        message={store.messages[i - store.firstItemIndex]}
+        store={store}
+      />
     ),
     [store],
   );

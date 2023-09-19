@@ -38,6 +38,15 @@ export default class AppStore {
     this.socketService.io.on('messages:new', (message: Message) => {
       this.getRoom(message.roomId)?.messages?.unshift(message);
     });
+    this.socketService.io.on('messages:edited', (message: Message) => {
+      const room = this.getRoom(message.roomId);
+      if (room) {
+        const messageToEdit = room.messages?.find(
+          (roomMessage) => roomMessage.id === message.id,
+        );
+        if (messageToEdit) messageToEdit.content = message.content;
+      }
+    });
   }
 
   setActive(roomId: number | undefined) {

@@ -3,7 +3,7 @@ import { api } from './Utilities';
 import { Message } from './interfaces';
 
 export default class MessagesAPI extends HttpBase {
-  static path: string = HttpBase.path + 'messages/';
+  static path: string = HttpBase.path + 'messages';
 
   static async create(roomId: number, content: string) {
     const params = new URLSearchParams({
