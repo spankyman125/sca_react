@@ -24,6 +24,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 2),
   },
+  zIndex: 1,
 }));
 
 const AttachmentList = observer(({ store }: { store: RoomInputUI }) => {
