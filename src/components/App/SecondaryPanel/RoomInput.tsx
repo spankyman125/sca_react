@@ -44,6 +44,7 @@ const AttachmentList = observer(({ store }: { store: RoomInputUI }) => {
         onClick={scrollLeft}
         sx={{
           position: 'absolute',
+          zIndex: 1,
           top: '30%',
           '@media(any-pointer:coarse)': { display: 'none' },
         }}
@@ -54,6 +55,7 @@ const AttachmentList = observer(({ store }: { store: RoomInputUI }) => {
         onClick={scrollRight}
         sx={{
           position: 'absolute',
+          zIndex: 1,
           top: '30%',
           right: '0%',
           '@media(any-pointer:coarse)': { display: 'none' },
