@@ -6,7 +6,8 @@ import RoomUI from './RoomUI';
 
 export default class RoomInputUI {
   roomUI: RoomUI;
-  messageContent = '';
+  text = '';
+  attachments: File[] = [];
 
   get roomId() {
     return this.roomUI.roomId;
@@ -18,19 +19,45 @@ export default class RoomInputUI {
   }
 
   setMessage(message: string) {
-    this.messageContent = message;
+    this.text = message;
+  }
+
+  setMessageAttachments(files: FileList | null) {
+    if (files)
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        this.attachments.push(file);
+      }
+  }
+
+  removeAttachment(index: number) {
+    this.attachments.splice(index, 1);
+  }
+
+  get attachmentsUrls() {
+    return this.attachments.map((attachment) => {
+      return URL.createObjectURL(attachment);
+    });
   }
 
   sendMessage() {
+    const randomId = new Date().getTime();
     const messagePlaceholder: Message = {
-      id: new Date().getTime(),
-      content: this.messageContent,
+      id: randomId,
+      content: this.text,
       createdAt: new Date().toString(),
       roomId: this.roomId,
       userId: authStore.user?.id || -1,
       user: authStore.user,
+      attachments: this.attachments.map((attachment, index) => {
+        return {
+          id: index,
+          messageId: randomId,
+          url: URL.createObjectURL(attachment),
+        };
+      }),
     };
-    void MessagesAPI.create(this.roomId, this.messageContent).then(
+    void MessagesAPI.create(this.roomId, this.text, this.attachments).then(
       (receivedMessage) => {
         const messageToEdit = this.roomUI.room.messages?.find(
           (message) => message.id === messagePlaceholder.id,
@@ -39,6 +66,7 @@ export default class RoomInputUI {
       },
     );
     this.roomUI.roomMessagesUI.addSelf(messagePlaceholder);
-    this.messageContent = '';
+    this.text = '';
+    this.attachments = [];
   }
 }

@@ -14,6 +14,13 @@ export interface Message {
   roomId: number;
   userId: number;
   user?: User;
+  attachments?: Attachment[];
+}
+
+export interface Attachment {
+  id: number;
+  url: string;
+  messageId: number;
 }
 
 export interface Room {

@@ -1,13 +1,18 @@
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import ArrowLeftOutlinedIcon from '@mui/icons-material/ArrowLeftOutlined';
+import ArrowRightOutlinedIcon from '@mui/icons-material/ArrowRightOutlined';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import SendIcon from '@mui/icons-material/Send';
 import {
   Box,
   IconButton,
   InputAdornment,
   InputBase,
+  Stack,
   styled,
 } from '@mui/material';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { createRef } from 'react';
 import RoomInputUI from '../../../stores/ui/App/RoomPanel/RoomInputUI';
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
@@ -21,6 +26,88 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
+const AttachmentList = observer(({ store }: { store: RoomInputUI }) => {
+  const scrolledContainer = createRef<HTMLDivElement>();
+
+  const scrollLeft = () => {
+    if (scrolledContainer.current) scrolledContainer.current.scrollLeft -= 300;
+  };
+
+  const scrollRight = () => {
+    if (scrolledContainer.current) scrolledContainer.current.scrollLeft += 300;
+  };
+
+  return (
+    <Box sx={{ position: 'relative' }}>
+      <IconButton
+        onClick={scrollLeft}
+        sx={{
+          position: 'absolute',
+          top: '30%',
+          '@media(any-pointer:coarse)': { display: 'none' },
+        }}
+      >
+        <ArrowLeftOutlinedIcon fontSize="large" />
+      </IconButton>
+      <IconButton
+        onClick={scrollRight}
+        sx={{
+          position: 'absolute',
+          top: '30%',
+          right: '0%',
+          '@media(any-pointer:coarse)': { display: 'none' },
+        }}
+      >
+        <ArrowRightOutlinedIcon fontSize="large" />
+      </IconButton>
+      <Stack
+        ref={scrolledContainer}
+        spacing={2}
+        direction="row"
+        sx={{
+          marginBottom: '25px',
+          marginTop: '5px',
+          overflowX: 'auto',
+          scrollBehavior: 'smooth',
+          scrollbarWidth: 'none',
+          '::-webkit-scrollbar': {
+            display: 'none',
+          },
+        }}
+      >
+        {store.attachmentsUrls.map((url, i) => (
+          <AttachmentPreview
+            attachmentImage={url}
+            handleRemoveClick={() => {
+              store.removeAttachment(i);
+            }}
+          />
+        ))}
+      </Stack>
+    </Box>
+  );
+});
+
+const AttachmentPreview = ({
+  attachmentImage,
+  handleRemoveClick,
+}: {
+  attachmentImage: string;
+  handleRemoveClick: () => void;
+}) => {
+  return (
+    <Box position={'relative'}>
+      <IconButton
+        sx={{ position: 'absolute', right: 0 }}
+        onClick={handleRemoveClick}
+      >
+        <HighlightOffIcon />
+      </IconButton>
+      <img src={attachmentImage} height={100} />
+    </Box>
+  );
+};
+
 const RoomInput = observer(({ store }: { store: RoomInputUI }) => {
   return (
     <Box
@@ -31,6 +118,7 @@ const RoomInput = observer(({ store }: { store: RoomInputUI }) => {
         minHeight: '50px',
       }}
     >
+      {store.attachmentsUrls.length > 0 && <AttachmentList store={store} />}
       <StyledInputBase
         multiline
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,9 +132,12 @@ const RoomInput = observer(({ store }: { store: RoomInputUI }) => {
             }
           }
         }}
-        value={store.messageContent}
+        value={store.text}
         endAdornment={
           <InputAdornment position="end">
+            <AttachmentButton
+              onChange={(e) => store.setMessageAttachments(e.target.files)}
+            />
             <IconButton
               onClick={() => {
                 store.sendMessage();
@@ -66,4 +157,16 @@ const RoomInput = observer(({ store }: { store: RoomInputUI }) => {
   );
 });
 
+const AttachmentButton = ({
+  onChange,
+}: {
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) => {
+  return (
+    <IconButton component="label">
+      <AddPhotoAlternateIcon />
+      <input type="file" accept="image/*" onChange={onChange} hidden multiple />
+    </IconButton>
+  );
+};
 export default RoomInput;

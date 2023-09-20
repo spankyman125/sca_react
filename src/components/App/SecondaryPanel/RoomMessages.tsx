@@ -3,6 +3,8 @@ import {
   Avatar,
   Box,
   IconButton,
+  ImageList,
+  ImageListItem,
   ListItemAvatar,
   Typography,
   useTheme,
@@ -99,6 +101,15 @@ const MessageRow = observer(
                 }}
               >
                 {message.content}
+                {message.attachments && (
+                  <ImageList sx={{ maxWidth: 600 }} cols={3}>
+                    {message.attachments.map((attachment) => (
+                      <ImageListItem key={attachment.id}>
+                        <img src={STATIC_URL + attachment.url} />
+                      </ImageListItem>
+                    ))}
+                  </ImageList>
+                )}
               </Typography>
             }
             disableTypography
