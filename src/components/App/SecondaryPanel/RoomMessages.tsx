@@ -20,6 +20,8 @@ import { STATIC_URL } from '../../../consts';
 import { authStore } from '../../../stores/AuthStore';
 import { userInfoPanelUI } from '../../../stores/ui/App/MainPanel/UserInfoPanelUI';
 import RoomMessagesUI from '../../../stores/ui/App/RoomPanel/RoomMessagesUI';
+import { PhotoProvider, PhotoView } from 'react-photo-view';
+import 'react-photo-view/dist/react-photo-view.css';
 
 const MessageRow = observer(
   ({ message, store }: { message: Message; store: RoomMessagesUI }) => {
@@ -103,11 +105,15 @@ const MessageRow = observer(
                 {message.content}
                 {message.attachments && (
                   <ImageList sx={{ maxWidth: 600 }} cols={3}>
-                    {message.attachments.map((attachment) => (
-                      <ImageListItem key={attachment.id}>
-                        <img src={STATIC_URL + attachment.url} />
-                      </ImageListItem>
-                    ))}
+                    <PhotoProvider>
+                      {message.attachments.map((attachment) => (
+                        <PhotoView src={STATIC_URL + attachment.url}>
+                          <ImageListItem key={attachment.id}>
+                            <img src={STATIC_URL + attachment.url} />
+                          </ImageListItem>
+                        </PhotoView>
+                      ))}
+                    </PhotoProvider>
                   </ImageList>
                 )}
               </Typography>
