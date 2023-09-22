@@ -4,7 +4,6 @@ import { GroupedVirtuosoHandle } from 'react-virtuoso';
 import RoomsAPI from '../../../../api/http/Rooms';
 import { Message } from '../../../../api/http/interfaces';
 import RoomUI from './RoomUI';
-import MessagesAPI from '../../../../api/http/Messages';
 
 export default class RoomMessagesUI {
   roomUI: RoomUI;
@@ -72,10 +71,5 @@ export default class RoomMessagesUI {
       align: 'end',
       behavior: 'smooth',
     });
-  }
-
-  editMessage(messageId: number, content: string) {
-    this.roomUI.editMessage(messageId, content);
-    void MessagesAPI.update(messageId, content);
   }
 }
