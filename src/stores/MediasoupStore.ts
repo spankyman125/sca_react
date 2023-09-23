@@ -176,7 +176,7 @@ export default class MediasoupStore {
         callback();
       } catch (error) {
         console.log(error);
-        errback(error);
+        if (error instanceof Error) errback(error);
       }
     });
 
@@ -192,9 +192,9 @@ export default class MediasoupStore {
             rtpParameters,
           });
           callback({ id });
-        } catch (err) {
+        } catch (error) {
           console.log(error);
-          errback(err);
+          if (error instanceof Error) errback(error);
         }
       },
     );
@@ -254,7 +254,7 @@ export default class MediasoupStore {
           callback();
         } catch (error) {
           console.log(error);
-          errback(error);
+          if (error instanceof Error) errback(error);
         }
       },
     );

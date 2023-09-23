@@ -24,14 +24,14 @@ const Transition = React.forwardRef(function Transition(
   return <Fade mountOnEnter unmountOnExit ref={ref} {...props} />;
 });
 
-const DialogContent = styled(MuiDialogContent)(({ theme }) => ({
+const DialogContent = styled(MuiDialogContent)(() => ({
   display: 'flex',
   gap: '20px',
   flexWrap: 'wrap',
   justifyContent: 'center',
 }));
 
-const RoomImage = styled('img')(({ theme }) => ({
+const RoomImage = styled('img')(() => ({
   height: '120px',
   width: '120px',
   borderRadius: '60px',

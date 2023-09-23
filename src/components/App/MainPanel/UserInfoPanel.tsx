@@ -44,7 +44,7 @@ export const UserInfoPanel = observer(
         TransitionComponent={Transition}
         onClose={() => store.close()}
       >
-        <UserPanelHeader store={store} />
+        <UserPanelHeader />
         <UserPanelCenter store={store} />
         <UserPanelBottom store={store} />
       </Dialog>
@@ -52,7 +52,7 @@ export const UserInfoPanel = observer(
   },
 );
 
-const UserPanelHeader = observer(({ store }: { store: UserInfoPanelUI }) => {
+const UserPanelHeader = observer(() => {
   return <DialogTitle>User info</DialogTitle>;
 });
 
