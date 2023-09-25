@@ -14,7 +14,12 @@ export default class SocketService {
   io: Socket;
 
   constructor(access_token: string) {
-    this.io = io(`wss://${location.host}`, {
+    const url =
+      process.env.NODE_ENV === 'development'
+        ? `wss://${location.hostname}:30125/`
+        : `wss://${location.host}/`;
+
+    this.io = io(`wss://${url}`, {
       extraHeaders: {
         Authorization: `Bearer ${access_token}`,
       },
