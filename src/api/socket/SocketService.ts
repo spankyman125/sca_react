@@ -19,7 +19,7 @@ export default class SocketService {
         ? `wss://${location.hostname}:30125/`
         : `wss://${location.host}/`;
 
-    this.io = io(`wss://${url}`, {
+    this.io = io(url, {
       extraHeaders: {
         Authorization: `Bearer ${access_token}`,
       },
