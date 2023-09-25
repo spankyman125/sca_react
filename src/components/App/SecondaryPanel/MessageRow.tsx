@@ -1,4 +1,5 @@
 import EditIcon from '@mui/icons-material/Edit';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import {
   Avatar,
   IconButton,
@@ -11,14 +12,13 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { observer } from 'mobx-react-lite';
-import React, { memo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import MessagesAPI from '../../../api/http/Messages';
 import { Attachment, Message } from '../../../api/http/interfaces';
 import { STATIC_URL } from '../../../consts';
 import { authStore } from '../../../stores/AuthStore';
 import { userInfoPanelUI } from '../../../stores/ui/App/MainPanel/UserInfoPanelUI';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
 
 export const MessageRow = observer(({ message }: { message: Message }) => {
   const [hovered, setHovered] = useState(false);
@@ -70,7 +70,7 @@ export const MessageRow = observer(({ message }: { message: Message }) => {
   );
 });
 
-const MessageHeader = memo(({ message }: { message: Message }) => {
+const MessageHeader = observer(({ message }: { message: Message }) => {
   return (
     <Typography>
       {message.user?.pseudonym}
@@ -128,7 +128,7 @@ const MessageText = observer(
   },
 );
 
-const MessageAttachments = memo(
+const MessageAttachments = observer(
   ({ attachments }: { attachments: Attachment[] }) => {
     const [hoveredIndex, setHoveredIndex] = useState(-1);
 
